@@ -1,3 +1,4 @@
+eslint.config.mjs;
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
@@ -7,7 +8,6 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
-      // 允许使用 any 类型
       "@typescript-eslint/no-explicit-any": "off",
     },
   },

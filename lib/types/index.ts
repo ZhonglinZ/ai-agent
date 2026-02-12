@@ -38,19 +38,6 @@ export interface PageLayoutConfig extends LayoutConfig {
 }
 
 /**
- * 用户信息
- */
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: "active" | "inactive";
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
  * 菜单项
  */
 export interface MenuItem {
@@ -59,4 +46,30 @@ export interface MenuItem {
   icon?: ReactNode;
   children?: MenuItem[];
   path?: string;
+}
+
+// 用户类型定义
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: "admin" | "user" | "guest";
+  status: "active" | "inactive";
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 分页参数类型
+export interface PaginationParams {
+  current: number; // 当前页码
+  pageSize: number; // 每页条数
+}
+
+// 分页响应类型
+export interface PaginatedResponse<T> {
+  list: T[]; // 数据列表
+  total: number; // 总条数
+  current: number; // 当前页码
+  pageSize: number; // 每页条数
 }
