@@ -7,6 +7,39 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * 格式化日期
+ * 支持多种输入格式，输出中文格式
+ */
+export function formatDate(date: Date | string | number): string {
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(date));
+}
+
+/**
+ * 格式化相对时间
+ * 例如：刚刚、5分钟前、2小时前
+ */
+export function formatRelativeTime(date: Date | string | number): string {
+  const now = new Date();
+  const target = new Date(date);
+  const diff = now.getTime() - target.getTime();
+
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (diff < minute) return '刚刚';
+  if (diff < hour) return `${Math.floor(diff / minute)}分钟前`;
+  if (diff < day) return `${Math.floor(diff / hour)}小时前`;
+  return `${Math.floor(diff / day)}天前`;
+}
+
 // 格式化工具函数
 export const formatUtils = {
   // 格式化货币
@@ -406,3 +439,59 @@ export function throttle<T extends (...args: any[]) => any>(
 export const sleep = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
+
+/**
+ * 格式化文件大小
+ * 将字节数转换为可读格式
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * 获取文件扩展名
+ * 从文件名中提取扩展名
+ */
+export function getFileExtension(filename: string): string {
+  return filename.slice((filename.lastIndexOf('.') - 1 >>> 0) + 2);
+}
+
+/**
+ * 数字格式化
+ * 添加千分位分隔符
+ */
+export function formatNumber(num: number): string {
+  return num.toLocaleString('zh-CN');
+}
+
+/**
+ * 手机号脱敏
+ * 隐藏中间4位数字
+ */
+export function maskPhone(phone: string): string {
+  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+}
+
+/**
+ * 邮箱脱敏
+ * 隐藏用户名部分字符
+ */
+export function maskEmail(email: string): string {
+  const [username, domain] = email.split('@');
+  if (username.length <= 2) return email;
+  const masked = username.charAt(0) + '*'.repeat(username.length - 2) + username.charAt(username.length - 1);
+  return `${masked}@${domain}`;
+}
+
+/**
+ * 生成随机 ID
+ * 用于临时标识符
+ */
+export function generateId(): string {
+  return Math.random().toString(36).substring(2, 15) +
+         Math.random().toString(36).substring(2, 15);
+}

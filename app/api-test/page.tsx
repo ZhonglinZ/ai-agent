@@ -14,7 +14,7 @@ export default function ApiTestPage() {
     execute: fetchUser,
   } = useApi(
     () => userApi.getUser("1"),
-    { immediate: false }, // 不自动执行
+    { immediate: false } // 不自动执行
   );
 
   // 测试分页 API Hook
@@ -31,7 +31,7 @@ export default function ApiTestPage() {
   return (
     <div className="p-6 space-y-6">
       <Card title="API Hooks 测试">
-        <Space direction="vertical" className="w-full">
+        <Space orientation="vertical" className="w-full">
           {/* 单个用户测试 */}
           <div>
             <h3>单个用户数据</h3>

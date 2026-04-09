@@ -104,6 +104,13 @@ export const USER_STATUS = {
   BANNED: "banned",
 } as const;
 
+export const USER_ROLES = {
+  SUPER_ADMIN: 'super_admin',   // 超级管理员
+  ADMIN: 'admin',               // 管理员
+  USER: 'user',                 // 普通用户
+  GUEST: 'guest',               // 访客
+} as const;
+
 export const ORDER_STATUS = {
   PENDING: "pending",
   PAID: "paid",
@@ -252,6 +259,47 @@ export const CURRENCIES = {
   JPY: "JPY",
 } as const;
 
+// 路由路径常量
+export const ROUTES = {
+  // 基础路由
+  HOME: '/',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  NOT_FOUND: '/404',
+  FORBIDDEN: '/403',
+
+  // 业务路由
+  DASHBOARD: '/dashboard',
+
+  // 用户管理
+  USERS: '/users',
+  USER_LIST: '/users/list',
+  USER_DETAIL: '/users/detail',
+  USER_ROLES: '/users/roles',
+
+  // 系统设置
+  SETTINGS: '/settings',
+  PROFILE: '/profile',
+} as const;
+
+// 消息类型
+export const MESSAGE_TYPES = {
+  SUCCESS: 'success',
+  ERROR: 'error',
+  WARNING: 'warning',
+  INFO: 'info',
+} as const;
+
+// 表单验证规则
+export const VALIDATION_RULES = {
+  PASSWORD_MIN_LENGTH: 8,
+  PASSWORD_MAX_LENGTH: 20,
+  USERNAME_MIN_LENGTH: 3,
+  USERNAME_MAX_LENGTH: 20,
+  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  PHONE_REGEX: /^1[3-9]\d{9}$/,
+} as const;
+
 // 时区常量
 export const TIMEZONES = {
   BEIJING: "Asia/Shanghai",
@@ -263,7 +311,9 @@ export const TIMEZONES = {
 // 导出类型
 export type UserStatus = (typeof USER_STATUS)[keyof typeof USER_STATUS];
 export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
+export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 export type PaymentStatus =
   (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
 export type ProductStatus =
   (typeof PRODUCT_STATUS)[keyof typeof PRODUCT_STATUS];
+export type RouteKey = keyof typeof ROUTES;
