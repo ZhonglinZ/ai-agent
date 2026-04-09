@@ -9,12 +9,22 @@ import { z } from "zod";
 import type { ApiResponse, PaginatedResponse } from "@/lib/types";
 
 // 模拟数据库操作（实际项目中应该使用真实的数据库）
-const mockUsers = [
+const mockUsers: Array<{
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  status: "active" | "inactive";
+  roleId: number;
+  roleName: string;
+  createdAt: string;
+  updatedAt: string;
+}> = [
   {
     id: 1,
     name: "John Doe",
     email: "john@example.com",
-    status: "active" as const,
+    status: "active",
     roleId: 1,
     roleName: "Admin",
     createdAt: "2024-01-01T00:00:00Z",
@@ -24,7 +34,7 @@ const mockUsers = [
     id: 2,
     name: "Jane Smith",
     email: "jane@example.com",
-    status: "active" as const,
+    status: "active",
     roleId: 2,
     roleName: "User",
     createdAt: "2024-01-02T00:00:00Z",
@@ -44,7 +54,7 @@ const createUserSchema = z.object({
 
 // 查询参数验证 schema
 const getUsersParamsSchema = z.object({
-  page: z
+  current: z
     .string()
     .transform(Number)
     .pipe(z.number().int().positive())
@@ -110,6 +120,10 @@ export async function GET(request: NextRequest) {
       const aValue = a[validatedParams.sortBy as keyof typeof a];
       const bValue = b[validatedParams.sortBy as keyof typeof b];
 
+      if (aValue == null || bValue == null) {
+        return 0;
+      }
+
       if (validatedParams.sortOrder === "asc") {
         return aValue > bValue ? 1 : -1;
       } else {
@@ -120,16 +134,23 @@ export async function GET(request: NextRequest) {
     // 分页
     const total = filteredUsers.length;
     const totalPages = Math.ceil(total / validatedParams.pageSize);
-    const startIndex = (validatedParams.page - 1) * validatedParams.pageSize;
+    const startIndex = (validatedParams.current - 1) * validatedParams.pageSize;
     const endIndex = startIndex + validatedParams.pageSize;
     const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
-    const response: PaginatedResponse = {
-      data: paginatedUsers,
+    const responseData: PaginatedResponse<typeof mockUsers[0]> = {
+      list: paginatedUsers,
       total,
-      page: validatedParams.page,
+      current: validatedParams.current,
       pageSize: validatedParams.pageSize,
-      totalPages,
+    };
+
+    // Wrap in ApiResponse format expected by the frontend
+    const response: ApiResponse<PaginatedResponse<typeof mockUsers[0]>> = {
+      success: true,
+      data: responseData,
+      message: "获取用户列表成功",
+      code: 200,
     };
 
     return NextResponse.json(response);
@@ -141,7 +162,7 @@ export async function GET(request: NextRequest) {
         {
           success: false,
           message: "参数验证失败",
-          errors: error.errors,
+          errors: error.issues,
         },
         { status: 400 },
       );
@@ -197,10 +218,11 @@ export async function POST(request: NextRequest) {
     // 添加到模拟数据库
     mockUsers.push(newUser);
 
-    const response: ApiResponse = {
+    const response: ApiResponse<typeof newUser> = {
       success: true,
       data: newUser,
       message: "用户创建成功",
+      code: 201,
     };
 
     return NextResponse.json(response, { status: 201 });
@@ -212,7 +234,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message: "数据验证失败",
-          errors: error.errors,
+          errors: error.issues,
         },
         { status: 400 },
       );
