@@ -88,7 +88,7 @@ export function usePaginatedApi<T>(
   apiFunction: (
     params: any,
   ) => Promise<ApiResponse<{ list: T[]; total: number }>>,
-  initialParams = { current: 1, pageSize: 10 },
+  initialParams = { current: 1, pageSize: 10 } as any,
 ) {
   const [params, setParams] = useState(initialParams);
 
@@ -99,7 +99,7 @@ export function usePaginatedApi<T>(
 
   // 改变页码
   const changePage = useCallback((current: number, pageSize?: number) => {
-    setParams((prev) => ({
+    setParams((prev: any) => ({
       ...prev,
       current,
       pageSize: pageSize || prev.pageSize,
@@ -108,7 +108,7 @@ export function usePaginatedApi<T>(
 
   // 改变查询参数（会重置到第一页）
   const changeParams = useCallback((newParams: Partial<typeof params>) => {
-    setParams((prev) => ({ ...prev, ...newParams, current: 1 }));
+    setParams((prev: any) => ({ ...prev, ...newParams, current: 1 }));
   }, []);
 
   return {

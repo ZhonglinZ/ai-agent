@@ -307,13 +307,3 @@ export const TIMEZONES = {
   LONDON: "Europe/London",
   TOKYO: "Asia/Tokyo",
 } as const;
-
-// 导出类型
-export type UserStatus = (typeof USER_STATUS)[keyof typeof USER_STATUS];
-export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
-export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
-export type PaymentStatus =
-  (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
-export type ProductStatus =
-  (typeof PRODUCT_STATUS)[keyof typeof PRODUCT_STATUS];
-export type RouteKey = keyof typeof ROUTES;
