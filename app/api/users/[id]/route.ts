@@ -16,7 +16,7 @@ const mockUsers = [
     id: 1,
     name: 'John Doe',
     email: 'john@example.com',
-    status: 'active' as const,
+    status: 'active' as 'active' | 'inactive',
     roleId: 1,
     roleName: 'Admin',
     createdAt: '2024-01-01T00:00:00Z',
@@ -26,7 +26,7 @@ const mockUsers = [
     id: 2,
     name: 'Jane Smith',
     email: 'jane@example.com',
-    status: 'active' as const,
+    status: 'active' as 'active' | 'inactive',
     roleId: 2,
     roleName: 'User',
     createdAt: '2024-01-02T00:00:00Z',
@@ -174,7 +174,7 @@ export async function PUT(
       updatedAt: new Date().toISOString(),
     };
     
-    mockUsers[userIndex] = updatedUser as unknown as typeof mockUsers[number];
+    mockUsers[userIndex] = updatedUser;
     
     const response: ApiResponse = {
       success: true,
