@@ -7,7 +7,7 @@ import {
   SaveOutlined,
   SendOutlined,
 } from "@ant-design/icons";
-import { useWorkflowStore } from "@/stores/workflowStore";
+import { useWorkflowStore } from "@/lib/stores/workflowStore";
 import { useOptimizedRouter } from "@/lib/hooks/useOptimizedRouter";
 
 export const EditorHeader: React.FC = () => {

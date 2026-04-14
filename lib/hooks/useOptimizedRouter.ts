@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter as useNextRouter } from 'next/navigation';
-import { useRouterStore } from '@/stores/routerStore';
+import { useRouterStore } from '@/lib/stores/routerStore';
 import { useCallback } from 'react';
 
 /**

@@ -6,7 +6,7 @@ import { Spin, Button, message } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { EditorHeader, EditorCanvas } from "@/components/workflow/editor";
-import { useWorkflowStore } from "@/stores/workflowStore";
+import { useWorkflowStore } from "@/lib/stores/workflowStore";
 import { useOptimizedRouter } from "@/lib/hooks/useOptimizedRouter";
 import { workflowService } from "@/lib/services/workflow.service";
 
@@ -34,7 +34,7 @@ const WorkflowEditorPage = () => {
         // 调用服务层获取数据
         const data = await workflowService.getWorkflowById(workflowId);
 
-        if (data) {
+        if (data != null) {
           // 数据存入 Store，所有子组件都可以访问
           setWorkflow(data);
         } else {
