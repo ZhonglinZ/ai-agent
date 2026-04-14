@@ -1,5 +1,6 @@
+import { PaginatedResponse, PaginationParams } from "../types/api";
 import { http } from "./http";
-import type { User, PaginationParams, PaginatedResponse } from "@/lib/types";
+import type { User } from "@/lib/types/user";
 
 /**
  * 用户相关 API 服务
@@ -9,7 +10,7 @@ export const userApi = {
   getUsers: (params?: PaginationParams & { search?: string }) => {
     // 构建查询参数
     const queryParams = new URLSearchParams();
-    if (params?.current) queryParams.set("current", params.current.toString());
+    if (params?.page) queryParams.set("page", params.page.toString());
     if (params?.pageSize)
       queryParams.set("pageSize", params.pageSize.toString());
     if (params?.search) queryParams.set("search", params.search);

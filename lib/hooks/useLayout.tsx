@@ -7,6 +7,7 @@ export interface PageLayoutConfig {
   showBreadcrumb?: boolean; // 是否显示面包屑
   containerClassName?: string; // 容器样式类名
   title?: string; // 页面标题
+  showFooter?: boolean; // 是否显示底部
 }
 
 // 创建布局上下文

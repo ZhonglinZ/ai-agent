@@ -1,21 +1,6 @@
-// 通用类型定义
-export interface ApiResponse<T = any> {
-  data: T;
-  message?: string;
-  success: boolean;
-  total?: number;
-  page?: number;
-  limit?: number;
-}
+import { User } from "./user";
 
-export interface PaginationParams {
-  page: number;
-  limit: number;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
+// 通用类型
 export interface TableColumn {
   title: string;
   dataIndex: string;
@@ -24,45 +9,6 @@ export interface TableColumn {
   align?: 'left' | 'center' | 'right';
   sorter?: boolean;
   render?: (value: any, record: any, index: number) => React.ReactNode;
-}
-
-// 用户相关类型
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-  name: string;
-  avatar?: string;
-  phone?: string;
-  status: 'active' | 'inactive' | 'banned';
-  role: string;
-  roleId: number;
-  department?: string;
-  position?: string;
-  lastLoginAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateUserRequest {
-  username: string;
-  email: string;
-  name: string;
-  password: string;
-  phone?: string;
-  roleId: number;
-  department?: string;
-  position?: string;
-}
-
-export interface UpdateUserRequest {
-  name?: string;
-  email?: string;
-  phone?: string;
-  roleId?: number;
-  department?: string;
-  position?: string;
-  status?: 'active' | 'inactive' | 'banned';
 }
 
 // 角色权限类型
@@ -253,23 +199,6 @@ export interface FormRule {
   max?: number;
   pattern?: RegExp;
   validator?: (rule: any, value: any) => Promise<void>;
-}
-
-// HTTP 请求配置类型
-export interface RequestConfig {
-  url: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  params?: Record<string, any>;
-  data?: any;
-  headers?: Record<string, string>;
-  timeout?: number;
-}
-
-// 错误类型
-export interface ApiError {
-  code: string;
-  message: string;
-  details?: any;
 }
 
 // 主题配置类型

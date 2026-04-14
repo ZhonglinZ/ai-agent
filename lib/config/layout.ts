@@ -58,3 +58,17 @@ export function getPageLayout(pathname: string): PageLayoutConfig {
 export function hasCustomLayout(pathname: string): boolean {
   return pathname in PAGE_LAYOUTS;
 }
+
+export const EXPLICIT_ROUTE_LAYOUTS: Record<string, Partial<PageLayoutConfig>> = {
+  // ... 其他配置
+
+  // 工作流编辑器 - 全屏编辑布局
+  '/workflow/editor': {
+    showSidebar: false,
+    showHeader: false,
+    showBreadcrumb: false,
+    showFooter: false,
+    containerClassName: 'min-h-screen',
+    title: '工作流编辑器',
+  },
+};

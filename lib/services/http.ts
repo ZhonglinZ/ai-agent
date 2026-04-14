@@ -1,7 +1,7 @@
 import { message } from 'antd';
 import { API_BASE_URL, STORAGE_KEYS, ERROR_MESSAGES } from '@/lib/constants';
 import { storageUtils } from '@/lib/utils';
-import type { ApiResponse, RequestConfig, ApiError } from '@/lib/types';
+import { type ApiResponse, type RequestConfig, type ApiError, HttpMethod } from '@/lib/types/api';
 
 // HTTP 状态码
 const HTTP_STATUS = {
@@ -211,7 +211,7 @@ class HttpClient {
   async get<T = any>(url: string, params?: Record<string, any>, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
-      method: 'GET',
+      method: HttpMethod.GET,
       params,
       ...config,
     });
@@ -221,7 +221,7 @@ class HttpClient {
   async post<T = any>(url: string, data?: any, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
-      method: 'POST',
+      method: HttpMethod.POST ,
       data,
       ...config,
     });
@@ -231,7 +231,7 @@ class HttpClient {
   async put<T = any>(url: string, data?: any, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
-      method: 'PUT',
+      method: HttpMethod.PUT,
       data,
       ...config,
     });
@@ -241,7 +241,7 @@ class HttpClient {
   async patch<T = any>(url: string, data?: any, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
-      method: 'PATCH',
+      method: HttpMethod.PATCH,
       data,
       ...config,
     });
@@ -251,7 +251,7 @@ class HttpClient {
   async delete<T = any>(url: string, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
-      method: 'DELETE',
+      method: HttpMethod.DELETE,
       ...config,
     });
   }

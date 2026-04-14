@@ -70,9 +70,11 @@ export enum HttpMethod {
 
 // 请求配置
 export interface RequestConfig {
+  url:string;
   method?: HttpMethod;
   headers?: Record<string, string>;
   params?: Record<string, any>;
   timeout?: number;
   retries?: number;
+  data?: any;
 }
