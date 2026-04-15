@@ -18,6 +18,27 @@ export function registerAllNodes(): void {
     icon: React.createElement(PlayCircleOutlined),
     category: 'trigger',
     component: StartNode,
+    formSchema: [
+    {
+      name: 'label',
+      label: '节点名称',
+      type: 'input',
+      required: true,
+      placeholder: '请输入节点名称',
+    },
+    {
+      name: 'triggerType',
+      label: '触发方式',
+      type: 'select',
+      required: true,
+      options: [
+        { label: '手动触发', value: 'manual' },
+        { label: '定时触发', value: 'schedule' },
+        { label: 'Webhook 触发', value: 'webhook' },
+      ],
+      tooltip: '选择工作流的触发方式',
+    },
+  ],
     propertyPanel: undefined,  // 后续实现
     maxInputs: 0,
     maxOutputs: 1,
@@ -42,6 +63,26 @@ export function registerAllNodes(): void {
       label: '结束',
       endStatus: 'success',
     },
+    formSchema: [
+    {
+      name: 'label',
+      label: '节点名称',
+      type: 'input',
+      required: true,
+      placeholder: '请输入节点名称',
+    },
+    {
+      name: 'endStatus',
+      label: '结束状态',
+      type: 'radio',
+      required: true,
+      options: [
+        { label: '成功', value: 'success' },
+        { label: '失败', value: 'failure' },
+      ],
+      tooltip: '工作流结束时的状态',
+    },
+  ],
   });
 }
 

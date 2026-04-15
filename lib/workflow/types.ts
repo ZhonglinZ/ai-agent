@@ -107,9 +107,16 @@ export interface NodeConfig<T extends WorkflowNodeData = WorkflowNodeData> {
 
   /** 节点组件 */
   component: React.ComponentType<{ data: T; id: string; selected?: boolean }>;
-  /** 属性面板组件 */
-  propertyPanel?: React.ComponentType<{ nodeId: string; data: T }>;
-
+   /**
+   * 属性面板配置（二选一）
+   * - formSchema: 简单表单使用配置驱动
+   * - propertyPanel: 复杂表单使用自定义组件
+   *
+   * 优先级：propertyPanel > formSchema
+   */
+  formSchema?: FormField[];
+  /** 自定义属性面板组件 */
+  propertyPanel?: React.ComponentType<PropertyPanelProps<T>>;
   /** 最大输入连接数，0 表示不限制 */
   maxInputs: number;
   /** 最大输出连接数，0 表示不限制 */
@@ -118,3 +125,60 @@ export interface NodeConfig<T extends WorkflowNodeData = WorkflowNodeData> {
   /** 默认数据 */
   defaultData: T;
 }
+
+/**
+ * 表单字段类型
+ * 用于动态表单渲染
+ */
+export type FormFieldType =
+  | 'input'      // 单行文本
+  | 'textarea'   // 多行文本
+  | 'select'     // 下拉选择
+  | 'switch'     // 开关
+  | 'number'     // 数字输入
+  | 'radio'      // 单选
+  | 'checkbox';  // 多选
+
+  /**
+ * 表单字段选项（用于 select、radio、checkbox）
+ */
+export interface FormFieldOption {
+  label: string;
+  value: string | number | boolean;
+}
+
+/**
+ * 表单字段配置
+ * 用于配置驱动的动态表单渲染
+ */
+export interface FormField {
+  /** 字段名（对应节点数据中的 key） */
+  name: string;
+  /** 字段标签 */
+  label: string;
+  /** 字段类型 */
+  type: FormFieldType;
+  /** 是否必填 */
+  required?: boolean;
+  /** 占位文本 */
+  placeholder?: string;
+  /** 选项（用于 select、radio、checkbox） */
+  options?: FormFieldOption[];
+  /** 默认值 */
+  defaultValue?: unknown;
+  /** 提示信息（显示为问号图标） */
+  tooltip?: string;
+  /** 字段描述（显示在输入框下方） */
+  description?: string;
+}
+
+/**
+ * 属性面板组件的 Props
+ */
+export interface PropertyPanelProps<T extends WorkflowNodeData = WorkflowNodeData> {
+  /** 节点 ID */
+  nodeId: string;
+  /** 节点数据 */
+  data: T;
+}
+

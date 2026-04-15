@@ -118,6 +118,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   setEdges: (edges: WorkflowEdge[]) => set({ edges }),
 
   onNodesChange: (changes) => {
+    console.log('onNodesChange 触发');
     set((state) => ({
       nodes: applyNodeChanges(changes, state.nodes),
     }));

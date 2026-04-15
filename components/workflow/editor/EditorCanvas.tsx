@@ -9,6 +9,7 @@ import {
   BackgroundVariant,
   type NodeTypes,
   type NodeMouseHandler,
+  Panel,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -17,6 +18,7 @@ import { initializeNodeRegistry } from "@/lib/workflow/registerNodes";
 import { WorkflowNode, NodeType } from "@/lib/workflow/types";
 import { StartNode } from "@/components/workflow/nodes/StartNode";
 import { EndNode } from "@/components/workflow/nodes/EndNode";
+import { PropertyPanel } from "@/components/workflow/panels";
 
 // 确保节点已注册（模块级别执行，只会执行一次）
 initializeNodeRegistry();
@@ -101,17 +103,23 @@ export const EditorCanvas: React.FC = () => {
     setSelectedNodeId(null);
   }, [setSelectedNodeId]);
 
+  const handleNodesChange = useCallback((changes: any) => {
+    onNodesChange(changes);
+  }, []);
+
   return (
     <div className="flex-1 h-full overflow-y-hidden">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}
+        // snapToGrid
+        // snapGrid={[20, 20]}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         defaultEdgeOptions={{
@@ -141,6 +149,10 @@ export const EditorCanvas: React.FC = () => {
           maskColor="rgba(0, 0, 0, 0.1)"
           position="bottom-right"
         />
+
+        <Panel position="top-right" className="m-0 p-0">
+          <PropertyPanel />
+        </Panel>
       </ReactFlow>
     </div>
   );
