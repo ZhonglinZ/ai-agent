@@ -10,7 +10,10 @@ import type { ReactNode } from 'react';
 export enum NodeType {
   START = 'start',
   END = 'end',
-  HTTP_REQUEST = 'httpRequest',  // 新增
+  CODE = 'code',
+  // ========== 后续扩展 ==========
+  // HTTP_REQUEST = 'httpRequest',
+  // CONDITION = 'condition',
 }
 
 /**
@@ -67,10 +70,17 @@ export interface EndNodeData extends BaseNodeData {
 }
 
 /**
+ * 代码节点数据
+ */
+export interface CodeNodeData extends BaseNodeData {
+  language: 'javascript' | 'python' ;
+  code: string;
+}
+/**
  * 所有节点数据的联合类型
  * 添加新节点时，需要在这里添加对应的数据类型
  */
-export type WorkflowNodeData = StartNodeData | EndNodeData;
+export type WorkflowNodeData = StartNodeData | EndNodeData | CodeNodeData;
 
 /**
  * 工作流节点类型

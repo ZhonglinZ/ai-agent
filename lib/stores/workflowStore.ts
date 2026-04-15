@@ -25,6 +25,8 @@ interface WorkflowState {
   edges: WorkflowEdge[];
   /** 当前选中的节点 ID */
   selectedNodeId: string | null;
+  /** 当前正在放置的节点类型（null 表示不在放置模式） */
+  placingNodeType: NodeType | null;
 
   // ==================== Actions ====================
   /** 设置工作流数据（通常在初始加载时调用） */
@@ -92,6 +94,11 @@ interface WorkflowState {
    * 设置选中的节点
    */
   setSelectedNodeId: (nodeId: string | null) => void;
+
+   /** 开始放置节点 */
+  startPlacingNode: (type: NodeType) => void;
+  /** 取消放置节点 */
+  cancelPlacingNode: () => void;
 }
 
 /**
@@ -113,6 +120,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   nodes: [] as WorkflowNode[],
   edges: [] as WorkflowEdge[],
   selectedNodeId: null,
+  placingNodeType: null,
 
   setNodes: (nodes: WorkflowNode[]) => set({ nodes }),
   setEdges: (edges: WorkflowEdge[]) => set({ edges }),
@@ -135,6 +143,10 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       edges: addEdge(connection, state.edges),
     }));
   },
+
+  startPlacingNode: (type) => set({ placingNodeType: type }), // 新增
+
+  cancelPlacingNode: () => set({ placingNodeType: null }), // 新增
 
   addNode: (type, position) => {
     const defaultData = nodeRegistry.getDefaultData(type);

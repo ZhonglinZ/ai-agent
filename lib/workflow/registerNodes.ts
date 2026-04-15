@@ -1,10 +1,11 @@
 import React from 'react';
-import { PlayCircleOutlined, StopOutlined } from '@ant-design/icons';
+import { CodeOutlined, PlayCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { nodeRegistry } from './nodeRegistry';
 import { NodeType } from './types';
-import type { StartNodeData, EndNodeData } from './types';
+import type { StartNodeData, EndNodeData, CodeNodeData } from './types';
 import { StartNode } from '@/components/workflow/nodes/StartNode';
 import { EndNode } from '@/components/workflow/nodes/EndNode';
+import { CodeNode } from '@/components/workflow/nodes/CodeNode';
 
 /**
  * 注册所有节点类型
@@ -84,6 +85,46 @@ export function registerAllNodes(): void {
     },
   ],
   });
+
+  nodeRegistry.register<CodeNodeData>({
+  type: NodeType.CODE,
+  label: '代码',
+  description: '执行自定义 JavaScript 或 Python 代码',
+  icon: React.createElement(CodeOutlined),
+  category: 'action',
+  component: CodeNode,
+  formSchema: [
+    {
+      name: 'label',
+      label: '节点名称',
+      type: 'input',
+      required: true,
+    },
+    {
+      name: 'language',
+      label: '编程语言',
+      type: 'select',
+      required: true,
+      options: [
+        { label: 'JavaScript', value: 'javascript' },
+        { label: 'Python', value: 'python' },
+      ],
+    },
+    {
+      name: 'code',
+      label: '代码',
+      type: 'textarea',
+      placeholder: '请输入代码',
+    },
+  ],
+  maxInputs: 1,
+  maxOutputs: 1,
+  defaultData: {
+    label: '代码',
+    language: 'javascript',
+    code: '// 在这里编写代码\nreturn { result: "Hello World" };',
+  },
+});
 }
 
 /**
