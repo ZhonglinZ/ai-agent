@@ -15,7 +15,6 @@ const WorkflowEditorPage = () => {
   const searchParams = useSearchParams();
   // 从 URL 获取 workflowId，例如 /workflow/editor?workflowId=123
   const workflowId = searchParams.get("workflowId");
-
   // 从 Store 获取状态和方法
   // 注意：这里我们同时获取了 state 和 actions
   const { workflow, isLoading, setWorkflow, setLoading, reset } =
@@ -59,7 +58,7 @@ const WorkflowEditorPage = () => {
     return (
       <MainLayout>
         <div className="flex justify-center items-center h-screen">
-          <Spin size="large" tip="加载中..." />
+          <Spin size="large" fullscreen tip="加载中..." />
         </div>
       </MainLayout>
     );
@@ -88,7 +87,7 @@ const WorkflowEditorPage = () => {
   // 状态3：正常渲染编辑器
   return (
     <MainLayout>
-      <div className="h-screen flex flex-col">
+      <div className="h-[calc(100vh-10rem)] flex flex-col">
         <EditorHeader />
         <EditorCanvas />
       </div>

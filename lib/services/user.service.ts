@@ -22,7 +22,7 @@ import type { ApiResponse, PaginatedResponse, IdParams, BatchParams } from '@/li
  * 用户服务类
  */
 export class UserService {
-  private readonly baseUrl = '/api/users';
+  private readonly baseUrl = '/users';
 
   /**
    * 获取用户列表

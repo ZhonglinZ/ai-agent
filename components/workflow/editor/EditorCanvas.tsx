@@ -102,7 +102,7 @@ export const EditorCanvas: React.FC = () => {
   }, [setSelectedNodeId]);
 
   return (
-    <div className="flex-1 h-full">
+    <div className="flex-1 h-full overflow-y-hidden">
       <ReactFlow
         nodes={nodes}
         edges={edges}
