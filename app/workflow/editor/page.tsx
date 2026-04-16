@@ -9,6 +9,7 @@ import { EditorHeader, EditorCanvas } from "@/components/workflow/editor";
 import { useWorkflowStore } from "@/lib/stores/workflowStore";
 import { useOptimizedRouter } from "@/lib/hooks/useOptimizedRouter";
 import { workflowService } from "@/lib/services/workflow.service";
+import { PageLayoutProvider } from "@/lib/hooks/useLayout";
 
 const WorkflowEditorPage = () => {
   const router = useOptimizedRouter();
@@ -56,42 +57,69 @@ const WorkflowEditorPage = () => {
   // 状态1：加载中
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="flex justify-center items-center h-screen">
-          <Spin size="large" fullscreen tip="加载中..." />
-        </div>
-      </MainLayout>
+      <PageLayoutProvider
+        config={{
+          showSidebar: false,
+          showHeader: false,
+          showBreadcrumb: true,
+          title: "工作流",
+        }}
+      >
+        <MainLayout>
+          <div className="flex justify-center items-center h-screen">
+            <Spin size="large" fullscreen tip="加载中..." />
+          </div>
+        </MainLayout>
+      </PageLayoutProvider>
     );
   }
 
   // 状态2：工作流不存在（可能被删除或 ID 无效）
   if (!workflow) {
     return (
-      <MainLayout>
-        <div className="flex flex-col justify-center items-center h-screen">
-          <div className="text-gray-500 text-lg mb-4">
-            工作流不存在或已被删除
+      <PageLayoutProvider
+        config={{
+          showSidebar: false,
+          showHeader: false,
+          showBreadcrumb: true,
+          title: "工作流",
+        }}
+      >
+        <MainLayout>
+          <div className="flex flex-col justify-center items-center h-screen">
+            <div className="text-gray-500 text-lg mb-4">
+              工作流不存在或已被删除
+            </div>
+            <Button
+              type="primary"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => router.push("/workflow/list")}
+            >
+              返回列表
+            </Button>
           </div>
-          <Button
-            type="primary"
-            icon={<ArrowLeftOutlined />}
-            onClick={() => router.push("/workflow/list")}
-          >
-            返回列表
-          </Button>
-        </div>
-      </MainLayout>
+        </MainLayout>
+      </PageLayoutProvider>
     );
   }
 
   // 状态3：正常渲染编辑器
   return (
-    <MainLayout>
-      <div className="h-[calc(100vh-10rem)] flex flex-col">
-        <EditorHeader />
-        <EditorCanvas />
-      </div>
-    </MainLayout>
+    <PageLayoutProvider
+      config={{
+        showSidebar: false,
+        showHeader: false,
+        showBreadcrumb: false,
+        title: "工作流编辑",
+      }}
+    >
+      <MainLayout>
+        <div className="h-[calc(100vh-4rem)] flex flex-col">
+          <EditorHeader />
+          <EditorCanvas />
+        </div>
+      </MainLayout>
+    </PageLayoutProvider>
   );
 };
 
