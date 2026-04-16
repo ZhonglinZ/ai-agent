@@ -458,3 +458,12 @@ body {
     margin: 0 auto;
   }
 }
+
+/* ReactFlow 光标样式 */
+.cursor-crosshair .react-flow__pane {
+  cursor: crosshair !important;
+}
+
+.cursor-crosshair .react-flow__node {
+  cursor: crosshair !important;
+}

@@ -39,7 +39,7 @@ export const CanvasToolbar: React.FC = () => {
         </Button>
       </Popover>
 
-      <Divider type="vertical" className="h-6 mx-1" />
+      <Divider orientation="vertical" className="h-6 mx-1" />
 
       {/* 缩放控制（占位，后续实现） */}
       <Tooltip title="缩小">
@@ -67,7 +67,7 @@ export const CanvasToolbar: React.FC = () => {
         />
       </Tooltip>
 
-      <Divider type="vertical" className="h-6 mx-1" />
+      <Divider orientation="vertical" className="h-6 mx-1" />
 
       {/* 撤销/重做（占位，后续实现） */}
       <Tooltip title="撤销">
