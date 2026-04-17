@@ -1,31 +1,57 @@
 /**
  * 画布工具栏组件
  *
- * 位于画布底部中央，提供节点添加、缩放、撤销等功能
+ * 位于画布底部中间，包含添加节点、缩放等功能
  */
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import { useReactFlow } from "@xyflow/react";
+import { useStore } from "zustand";
 import { Button, Popover, Tooltip, Divider } from "antd";
 import {
   PlusOutlined,
   ZoomInOutlined,
   ZoomOutOutlined,
-  AimOutlined,
   UndoOutlined,
   RedoOutlined,
+  AimOutlined,
 } from "@ant-design/icons";
 import { NodeSelector } from "./NodeSelector";
-import { useReactFlow } from "@xyflow/react";
 import { useWorkflowStore } from "@/lib/stores/workflowStore";
-import { useStore } from "zustand";
 
+/**
+ * 画布工具栏
+ * 提供添加节点、缩放、撤销重做等功能
+ */
 export const CanvasToolbar: React.FC = () => {
+  // 节点选择器弹窗是否打开
   const [selectorOpen, setSelectorOpen] = useState(false);
+
+  // 获取 ReactFlow 实例，用于缩放控制
   const { zoomIn, zoomOut, fitView } = useReactFlow();
+
+  // 获取撤销/重做相关方法
+  const { undo, redo } = useWorkflowStore.temporal.getState();
+
+  // 订阅 temporal store 的状态变化，获取历史记录长度
+  const canUndo = useStore(
+    useWorkflowStore.temporal,
+    (state) => state.pastStates.length > 0
+  );
+  const canRedo = useStore(
+    useWorkflowStore.temporal,
+    (state) => state.futureStates.length > 0
+  );
+
+  // 处理节点选择后关闭弹窗
+  const handleNodeSelect = () => {
+    setSelectorOpen(false);
+  };
+
   // 缩放处理函数
   const handleZoomIn = useCallback(() => {
-    zoomIn({ duration: 200 }); // 200ms 过渡动画
+    zoomIn({ duration: 200 });
   }, [zoomIn]);
 
   const handleZoomOut = useCallback(() => {
@@ -33,21 +59,10 @@ export const CanvasToolbar: React.FC = () => {
   }, [zoomOut]);
 
   const handleFitView = useCallback(() => {
-    fitView({ padding: 0.2, duration: 200 }); // 边缘留 20% 空白
+    fitView({ padding: 0.2, duration: 200 });
   }, [fitView]);
 
-  // 新增：获取撤销/重做相关方法
-  const { undo, redo } = useWorkflowStore.temporal.getState();
-  // 新增：订阅 temporal store 的状态变化，获取历史记录长度
-  const canUndo = useStore(useWorkflowStore.temporal, (state) => {
-    console.log("past ", state.pastStates.length);
-    return state.pastStates.length > 0;
-  });
-  const canRedo = useStore(
-    useWorkflowStore.temporal,
-    (state) => state.futureStates.length > 0
-  );
-
+  // 撤销/重做处理函数
   const handleUndo = useCallback(() => {
     undo();
   }, [undo]);
@@ -63,7 +78,7 @@ export const CanvasToolbar: React.FC = () => {
       const isCtrlOrCmd = event.ctrlKey || event.metaKey;
 
       if (isCtrlOrCmd && event.key === "z") {
-        event.preventDefault(); // 阻止浏览器默认行为
+        event.preventDefault();
         if (event.shiftKey) {
           // Ctrl+Shift+Z: 重做
           redo();
@@ -73,7 +88,7 @@ export const CanvasToolbar: React.FC = () => {
         }
       }
 
-      // 也支持 Ctrl+Y 重做（Windows 用户习惯）
+      // 也支持 Ctrl+Y 重做
       if (isCtrlOrCmd && event.key === "y") {
         event.preventDefault();
         redo();
@@ -85,13 +100,10 @@ export const CanvasToolbar: React.FC = () => {
   }, [undo, redo]);
 
   return (
-    <div
-      className="bg-white rounded-full shadow-lg border border-gray-200
-                    px-2 py-1.5 flex items-center gap-1"
-    >
+    <div className="bg-white rounded-full shadow-lg border border-gray-200 px-2 py-1.5 flex items-center gap-1">
       {/* 添加节点按钮 */}
       <Popover
-        content={<NodeSelector onSelect={() => setSelectorOpen(false)} />}
+        content={<NodeSelector onSelect={handleNodeSelect} />}
         trigger="click"
         placement="top"
         open={selectorOpen}
@@ -105,7 +117,7 @@ export const CanvasToolbar: React.FC = () => {
 
       <Divider orientation="vertical" className="h-6 mx-1" />
 
-      {/* 缩放控制（占位，后续实现） */}
+      {/* 缩放按钮组 */}
       <Tooltip title="缩小">
         <Button
           type="text"
@@ -114,6 +126,7 @@ export const CanvasToolbar: React.FC = () => {
           onClick={handleZoomOut}
         />
       </Tooltip>
+
       <Tooltip title="放大">
         <Button
           type="text"
@@ -122,6 +135,7 @@ export const CanvasToolbar: React.FC = () => {
           onClick={handleZoomIn}
         />
       </Tooltip>
+
       <Tooltip title="适应画布">
         <Button
           type="text"
@@ -133,8 +147,8 @@ export const CanvasToolbar: React.FC = () => {
 
       <Divider orientation="vertical" className="h-6 mx-1" />
 
-      {/* 撤销/重做（占位，后续实现） */}
-      <Tooltip title="撤销">
+      {/* 撤销重做按钮组 */}
+      <Tooltip title="撤销 (Ctrl+Z)">
         <Button
           type="text"
           icon={<UndoOutlined />}
@@ -145,7 +159,8 @@ export const CanvasToolbar: React.FC = () => {
           disabled={!canUndo}
         />
       </Tooltip>
-      <Tooltip title="重做">
+
+      <Tooltip title="重做 (Ctrl+Shift+Z)">
         <Button
           type="text"
           icon={<RedoOutlined />}

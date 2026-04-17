@@ -75,6 +75,11 @@ const CanvasContent: React.FC = () => {
     setNodes(initialNodes);
   }, [nodes.length, setNodes]);
 
+  const handleNodesChange = useCallback((changes: any) => {
+    console.log("=== 节点变化 ===", changes);
+    onNodesChange(changes);
+  }, []);
+
   // 处理节点点击
   const handleNodeClick: NodeMouseHandler<WorkflowNode> = useCallback(
     (_event, node) => {
@@ -142,11 +147,12 @@ const CanvasContent: React.FC = () => {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}
+        nodeDragThreshold={50}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         defaultEdgeOptions={{ type: "smoothstep", animated: false }}
