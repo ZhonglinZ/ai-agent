@@ -12,7 +12,6 @@ import type { Workflow } from '@/lib/types/workflow';
 import type { WorkflowNode, WorkflowEdge, WorkflowNodeData } from '@/lib/workflow/types';
 import { NodeType } from '@/lib/workflow/types';
 import { nodeRegistry } from '@/lib/workflow/nodeRegistry';
-import { immer } from 'zustand/middleware/immer';
 /**
  * 工作流编辑器状态接口
  * 管理工作流的基本信息、画布节点和编辑状态
@@ -88,7 +87,7 @@ const generateNodeId = (): string => {
  */
 export const useWorkflowStore = create<WorkflowState>()(
   temporal(
-   immer( (set) => ({
+    (set) => ({
       // 初始状态
       ...initialState,
 
@@ -194,19 +193,23 @@ export const useWorkflowStore = create<WorkflowState>()(
       startPlacingNode: (type) => set({ placingNodeType: type }),
 
       cancelPlacingNode: () => set({ placingNodeType: null }),
-    })),
+    }),
     {
       // 只追踪 nodes 和 edges 的变化（不追踪 UI 状态如 selectedNodeId）
       partialize: (state) => ({
         nodes: state.nodes,
         edges: state.edges,
       }),
+      // 在保存状态时，过滤掉节点的 width, height, measured 等属性
+      onSave: (state) => ({
+        nodes: state.nodes.map(({ width, height, measured, ...rest }) => rest),
+        edges: state.edges,
+      }),
       // 限制历史记录数量，防止内存占用过大
       limit: 50,
       // 使用浅比较来判断状态是否真的改变了
       equality: (past, present) => {
-        // 如果 nodes 和 edges 的引用相同，说明没有变化
-        return past.nodes.length === present.nodes.length && past.edges.length === present.edges.length;
+        return past.nodes === present.nodes && past.edges === present.edges;
       },
     }
   )

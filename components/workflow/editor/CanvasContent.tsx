@@ -22,6 +22,7 @@ import {
   CanvasToolbar,
   PlacingNodePreview,
 } from "@/components/workflow/toolbar";
+import { useStore } from "zustand";
 
 // 确保节点已注册
 initializeNodeRegistry();
@@ -52,7 +53,7 @@ const CanvasContent: React.FC = () => {
 
   // 获取 ReactFlow 实例，用于坐标转换
   const reactFlowInstance = useReactFlow();
-
+  const temporal = useWorkflowStore.temporal.getState();
   // 初始化默认节点
   useEffect(() => {
     if (nodes.length > 0) return;
@@ -73,12 +74,40 @@ const CanvasContent: React.FC = () => {
     ];
 
     setNodes(initialNodes);
+    temporal.clear();
   }, [nodes.length, setNodes]);
 
-  const handleNodesChange = useCallback((changes: any) => {
-    console.log("=== 节点变化 ===", changes);
-    onNodesChange(changes);
-  }, []);
+  const handleNodesChange = useCallback(
+    (changes: any) => {
+      // 过滤掉 dimensions 和 position 类型的变化
+      // dimensions: ReactFlow 内部自动调整的节点尺寸，不应该被记录
+      // position: 由 onNodeDragStop 统一处理
+      const importantChanges = changes.filter(
+        (change: any) =>
+          change.type !== "dimensions" && change.type !== "position"
+      );
+
+      if (importantChanges.length > 0) {
+        onNodesChange(importantChanges);
+      }
+    },
+    [onNodesChange]
+  );
+
+  // 处理节点拖拽结束 - 同步最终位置到 store
+  const handleNodeDragStop = useCallback(
+    (_event: any, node: WorkflowNode) => {
+      // 拖拽结束时，更新该节点的最终位置
+      onNodesChange([
+        {
+          id: node.id,
+          type: "position",
+          position: node.position,
+        },
+      ]);
+    },
+    [onNodesChange]
+  );
 
   // 处理节点点击
   const handleNodeClick: NodeMouseHandler<WorkflowNode> = useCallback(
@@ -148,11 +177,12 @@ const CanvasContent: React.FC = () => {
         edges={edges}
         nodeTypes={nodeTypes}
         onNodesChange={handleNodesChange}
+        onNodeDragStop={handleNodeDragStop}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}
-        nodeDragThreshold={50}
+        nodeDragThreshold={1}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         defaultEdgeOptions={{ type: "smoothstep", animated: false }}
