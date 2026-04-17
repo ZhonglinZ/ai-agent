@@ -5,7 +5,7 @@
  */
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button, Popover, Tooltip, Divider } from "antd";
 import {
   PlusOutlined,
@@ -16,9 +16,73 @@ import {
   RedoOutlined,
 } from "@ant-design/icons";
 import { NodeSelector } from "./NodeSelector";
+import { useReactFlow } from "@xyflow/react";
+import { useWorkflowStore } from "@/lib/stores/workflowStore";
+import { useStore } from "zustand";
 
 export const CanvasToolbar: React.FC = () => {
   const [selectorOpen, setSelectorOpen] = useState(false);
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
+  // 缩放处理函数
+  const handleZoomIn = useCallback(() => {
+    zoomIn({ duration: 200 }); // 200ms 过渡动画
+  }, [zoomIn]);
+
+  const handleZoomOut = useCallback(() => {
+    zoomOut({ duration: 200 });
+  }, [zoomOut]);
+
+  const handleFitView = useCallback(() => {
+    fitView({ padding: 0.2, duration: 200 }); // 边缘留 20% 空白
+  }, [fitView]);
+
+  // 新增：获取撤销/重做相关方法
+  const { undo, redo } = useWorkflowStore.temporal.getState();
+  // 新增：订阅 temporal store 的状态变化，获取历史记录长度
+  const canUndo = useStore(useWorkflowStore.temporal, (state) => {
+    console.log("past ", state.pastStates.length);
+    return state.pastStates.length > 0;
+  });
+  const canRedo = useStore(
+    useWorkflowStore.temporal,
+    (state) => state.futureStates.length > 0
+  );
+
+  const handleUndo = useCallback(() => {
+    undo();
+  }, [undo]);
+
+  const handleRedo = useCallback(() => {
+    redo();
+  }, [redo]);
+
+  // 键盘快捷键支持 (Ctrl+Z / Ctrl+Shift+Z)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // 检查是否按下 Ctrl 键（Mac 上是 Cmd 键）
+      const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+
+      if (isCtrlOrCmd && event.key === "z") {
+        event.preventDefault(); // 阻止浏览器默认行为
+        if (event.shiftKey) {
+          // Ctrl+Shift+Z: 重做
+          redo();
+        } else {
+          // Ctrl+Z: 撤销
+          undo();
+        }
+      }
+
+      // 也支持 Ctrl+Y 重做（Windows 用户习惯）
+      if (isCtrlOrCmd && event.key === "y") {
+        event.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo]);
 
   return (
     <div
@@ -46,24 +110,24 @@ export const CanvasToolbar: React.FC = () => {
         <Button
           type="text"
           icon={<ZoomOutOutlined />}
-          className="rounded-full"
-          disabled
+          className="text-gray-500 hover:text-gray-700"
+          onClick={handleZoomOut}
         />
       </Tooltip>
       <Tooltip title="放大">
         <Button
           type="text"
           icon={<ZoomInOutlined />}
-          className="rounded-full"
-          disabled
+          className="text-gray-500 hover:text-gray-700"
+          onClick={handleZoomIn}
         />
       </Tooltip>
       <Tooltip title="适应画布">
         <Button
           type="text"
           icon={<AimOutlined />}
-          className="rounded-full"
-          disabled
+          className="text-gray-500 hover:text-gray-700"
+          onClick={handleFitView}
         />
       </Tooltip>
 
@@ -74,16 +138,22 @@ export const CanvasToolbar: React.FC = () => {
         <Button
           type="text"
           icon={<UndoOutlined />}
-          className="rounded-full"
-          disabled
+          className={
+            canUndo ? "text-gray-500 hover:text-gray-700" : "text-gray-300"
+          }
+          onClick={handleUndo}
+          disabled={!canUndo}
         />
       </Tooltip>
       <Tooltip title="重做">
         <Button
           type="text"
           icon={<RedoOutlined />}
-          className="rounded-full"
-          disabled
+          className={
+            canRedo ? "text-gray-500 hover:text-gray-700" : "text-gray-300"
+          }
+          onClick={handleRedo}
+          disabled={!canRedo}
         />
       </Tooltip>
     </div>
