@@ -1,44 +1,107 @@
+/**
+ * 开始节点组件
+ *
+ * 工作流的入口节点，只有输出连接点，没有输入连接点
+ * 显示输入变量列表
+ */
 "use client";
 
-import React from "react";
-import { PlayCircleOutlined } from "@ant-design/icons";
-import { BaseNode } from "./BaseNode";
+import React, { useState } from "react";
+import { Handle, Position } from "@xyflow/react";
+import {
+  PlayCircleOutlined,
+  DownOutlined,
+  RightOutlined,
+} from "@ant-design/icons";
 import type { StartNodeData } from "@/lib/workflow/types";
 
 /**
- * 开始节点组件 Props
- *
- * ReactFlow 会传入这些属性：
- * - id: 节点 ID
- * - data: 节点数据（我们定义的 StartNodeData）
- * - selected: 是否被选中
+ * 变量类型显示映射
  */
-export interface StartNodeProps {
+const typeLabels: Record<string, string> = {
+  string: "string",
+  number: "number",
+  boolean: "boolean",
+  object: "object",
+  array: "array",
+};
+
+interface StartNodeProps {
   id: string;
   data: StartNodeData;
   selected?: boolean;
 }
 
 /**
- * 触发类型的中文标签
+ * 开始节点组件
  */
-const triggerTypeLabels: Record<StartNodeData["triggerType"], string> = {
-  manual: "手动触发",
-  schedule: "定时触发",
-  webhook: "Webhook 触发",
-};
+export const StartNode: React.FC<StartNodeProps> = ({ data, selected }) => {
+  const [showInputs, setShowInputs] = useState(true);
 
-export const StartNode: React.FC<StartNodeProps> = ({ id, data, selected }) => {
+  // 获取输入变量列表
+  const inputs = data.inputs || [];
+
   return (
-    <BaseNode
-      id={id}
-      selected={selected}
-      icon={<PlayCircleOutlined />}
-      title={data.label}
-      subtitle={triggerTypeLabels[data.triggerType]}
-      color="green"
-      showInput={false} // 开始节点没有输入
-      showOutput={true}
-    />
+    <div
+      className={`
+        min-w-[220px] rounded-xl shadow-sm bg-white border-2
+        ${selected ? "border-blue-500 shadow-md" : "border-gray-200"}
+        transition-all duration-200
+      `}
+    >
+      {/* 头部：图标 + 标题 */}
+      <div className="flex items-center gap-3 p-3 pb-2">
+        <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center text-white">
+          <PlayCircleOutlined className="text-base" />
+        </div>
+        <span className="font-medium text-gray-900">{data.label}</span>
+      </div>
+
+      {/* 输入变量区域 */}
+      <div className="px-3 pb-3">
+        {/* 可折叠标题 */}
+        <div
+          className="flex items-center gap-1 cursor-pointer text-gray-600 hover:text-gray-900 mb-2"
+          onClick={() => setShowInputs(!showInputs)}
+        >
+          {showInputs ? (
+            <DownOutlined className="text-xs" />
+          ) : (
+            <RightOutlined className="text-xs" />
+          )}
+          <span className="text-sm font-medium">输入</span>
+        </div>
+
+        {/* 变量列表 */}
+        {showInputs && (
+          <div className="space-y-1">
+            {inputs.length === 0 ? (
+              <div className="text-sm text-gray-400">未配置变量</div>
+            ) : (
+              inputs.map((variable) => (
+                <div
+                  key={variable.id}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <span className="text-gray-900">
+                    {variable.name || "未命名"}
+                  </span>
+                  <span className="text-gray-400">
+                    {typeLabels[variable.type]}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 输出连接点 */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="w-3 h-3 bg-blue-500 border-2 border-white"
+      />
+    </div>
   );
 };

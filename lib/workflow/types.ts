@@ -52,21 +52,57 @@ export interface BaseNodeData {
   /** 索引签名，允许额外的属性 */
   [key: string]: unknown;
 }
+/**
+ * 输入变量类型
+ */
+export type InputVariableType = 'string' | 'number' | 'boolean' | 'object' | 'array';
 
+/**
+ * 输入变量定义（用于开始节点）
+ */
+export interface InputVariable {
+  /** 变量唯一标识 */
+  id: string;
+  /** 变量名 */
+  name: string;
+  /** 变量类型 */
+  type: InputVariableType;
+  /** 是否必填 */
+  required?: boolean;
+  /** 默认值 */
+  defaultValue?: string;
+  /** 变量描述 */
+  description?: string;
+}
 /**
  * 开始节点数据
  */
 export interface StartNodeData extends BaseNodeData {
   /** 触发方式：manual-手动触发，schedule-定时触发，webhook-Webhook触发 */
   triggerType: 'manual' | 'schedule' | 'webhook';
+  /** 输入变量列表 */
+  inputs: InputVariable[];
 }
 
+/**
+ * 输出变量定义（用于结束节点）
+ */
+export interface EndOutputVariable {
+  /** 变量唯一标识 */
+  id: string;
+  /** 变量名 */
+  name: string;
+  /** 变量值（引用其他节点的输出或固定值） */
+  value: string;
+}
 /**
  * 结束节点数据
  */
 export interface EndNodeData extends BaseNodeData {
   /** 结束状态：success-成功，failure-失败 */
   endStatus: 'success' | 'failure';
+  /** 输出变量列表 */
+  outputVariables: EndOutputVariable[];
 }
 
 /**

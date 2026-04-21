@@ -63,13 +63,13 @@ const CanvasContent: React.FC = () => {
         id: "start_1",
         type: NodeType.START,
         position: { x: 100, y: 200 },
-        data: { label: "开始", triggerType: "manual" },
+        data: { label: "开始", triggerType: "manual", inputs: [] },
       },
       {
         id: "end_1",
         type: NodeType.END,
         position: { x: 500, y: 200 },
-        data: { label: "结束", endStatus: "success" },
+        data: { label: "结束", endStatus: "success", outputVariables: [] },
       },
     ];
 
