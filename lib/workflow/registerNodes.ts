@@ -1,13 +1,15 @@
 import React from 'react';
-import { CodeOutlined, PlayCircleOutlined, StopOutlined } from '@ant-design/icons';
+import { CodeOutlined, PlayCircleOutlined, RobotOutlined, StopOutlined } from '@ant-design/icons';
 import { nodeRegistry } from './nodeRegistry';
 import { NodeType } from './types';
-import type { StartNodeData, EndNodeData, CodeNodeData } from './types';
+import type { StartNodeData, EndNodeData, CodeNodeData, LLMNodeData } from './types';
 import { StartNode } from '@/components/workflow/nodes/StartNode';
 import { EndNode } from '@/components/workflow/nodes/EndNode';
 import { CodeNode } from '@/components/workflow/nodes/CodeNode';
 import { StartPropertyPanel } from '@/components/workflow/panels/StartNodePropertyPanel';
 import { EndPropertyPanel } from '@/components/workflow/panels/EndNodePropertyPanel';
+import { LLMNode } from '@/components/workflow/nodes';
+import { LLMPropertyPanel } from '@/components/workflow/panels';
 
 /**
  * 注册所有节点类型
@@ -86,6 +88,38 @@ export function registerAllNodes(): void {
     label: '代码',
     language: 'javascript',
     code: '// 在这里编写代码\nreturn { result: "Hello World" };',
+  },
+});
+
+// ==================== 注册大模型节点 ====================
+nodeRegistry.register<LLMNodeData>({
+  type: NodeType.LLM,
+  label: '大模型',
+  description: '调用大语言模型（LLM）生成内容',
+  icon: React.createElement(RobotOutlined),
+  iconColor: 'blue',
+  category: 'action',
+  component: LLMNode,
+  // 使用自定义属性面板（复杂表单）
+  propertyPanel: LLMPropertyPanel,
+  maxInputs: 1,
+  maxOutputs: 1,
+  defaultData: {
+    label: '大模型',
+    model: undefined,           // 默认未选择模型
+    temperatureEnabled: true,   // 默认启用温度参数
+    temperature: 0.6,           // 默认温度
+    topPEnabled: false,         // 默认不启用 Top P
+    topP: 0.8,                  // 默认 Top P 值
+    context: '',                // 上下文变量
+    prompt: '',                 // 提示词
+    outputs: [                  // 默认输出变量
+      {
+        name: 'text',
+        type: 'string',
+        description: '生成内容',
+      },
+    ],
   },
 });
 }

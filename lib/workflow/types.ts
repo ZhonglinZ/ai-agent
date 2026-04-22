@@ -11,6 +11,8 @@ export enum NodeType {
   START = 'start',
   END = 'end',
   CODE = 'code',
+  /** 大模型节点 - 调用 LLM 生成内容 */
+  LLM = 'llm',  // 新增
   // ========== 后续扩展 ==========
   // HTTP_REQUEST = 'httpRequest',
   // CONDITION = 'condition',
@@ -112,11 +114,45 @@ export interface CodeNodeData extends BaseNodeData {
   language: 'javascript' | 'python' ;
   code: string;
 }
+
+/**
+ * 输出变量定义
+ */
+export interface LLMOutputVariable {
+  /** 变量名 */
+  name: string;
+  /** 变量类型 */
+  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  /** 变量描述 */
+  description?: string;
+}
+
+/**
+ * 大模型节点数据
+ */
+export interface LLMNodeData extends BaseNodeData {
+  /** 选择的模型 ID */
+  model?: string;
+  /** 是否启用温度参数 */
+  temperatureEnabled?: boolean;
+  /** 温度参数（0-1） */
+  temperature?: number;
+  /** 是否启用 Top P 参数 */
+  topPEnabled?: boolean;
+  /** Top P 参数（0-1） */
+  topP?: number;
+  /** 上下文变量（引用其他节点的输出） */
+  context?: string;
+  /** 提示词 */
+  prompt?: string;
+  /** 输出变量列表 */
+  outputs: LLMOutputVariable[];
+}
 /**
  * 所有节点数据的联合类型
  * 添加新节点时，需要在这里添加对应的数据类型
  */
-export type WorkflowNodeData = StartNodeData | EndNodeData | CodeNodeData;
+export type WorkflowNodeData = StartNodeData | EndNodeData | CodeNodeData | LLMNodeData;
 
 /**
  * 工作流节点类型
@@ -129,6 +165,11 @@ export type WorkflowNode = Node<WorkflowNodeData, NodeType>;
  * 暂时使用 ReactFlow 默认的 Edge 类型
  */
 export type WorkflowEdge = Edge;
+
+/**
+ * 图标颜色类型
+ */
+export type IconColor = 'blue' | 'green' | 'red' | 'orange' | 'purple' | 'gray';
 
 /**
  * 节点配置接口
@@ -150,7 +191,8 @@ export interface NodeConfig<T extends WorkflowNodeData = WorkflowNodeData> {
   icon: ReactNode;
   /** 节点分类 */
   category: NodeCategory;
-
+  /** 图标背景色 */
+  iconColor?: IconColor;
   /** 节点组件 */
   component: React.ComponentType<{ data: T; id: string; selected?: boolean }>;
    /**

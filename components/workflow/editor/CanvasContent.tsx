@@ -16,7 +16,12 @@ import "@xyflow/react/dist/style.css";
 import { useWorkflowStore } from "@/lib/stores/workflowStore";
 import { initializeNodeRegistry, NodeType } from "@/lib/workflow";
 import type { WorkflowNode } from "@/lib/workflow";
-import { StartNode, EndNode, CodeNode } from "@/components/workflow/nodes";
+import {
+  StartNode,
+  EndNode,
+  CodeNode,
+  LLMNode,
+} from "@/components/workflow/nodes";
 import { PropertyPanel } from "@/components/workflow/panels";
 import {
   CanvasToolbar,
@@ -32,6 +37,7 @@ const nodeTypes: NodeTypes = {
   [NodeType.START]: StartNode,
   [NodeType.END]: EndNode,
   [NodeType.CODE]: CodeNode,
+  [NodeType.LLM]: LLMNode,
 };
 /**
  * 画布内部组件

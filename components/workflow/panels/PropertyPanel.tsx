@@ -8,6 +8,19 @@ import { nodeRegistry } from "@/lib/workflow/nodeRegistry";
 import { DynamicForm } from "./DynamicForm";
 import type { NodeConfig, WorkflowNodeData } from "@/lib/workflow/types";
 
+/**
+ * 图标背景色映射
+ * 与 BaseNode 保持一致
+ */
+const iconColorClasses: Record<string, string> = {
+  blue: "bg-blue-500",
+  green: "bg-green-500",
+  red: "bg-red-500",
+  orange: "bg-orange-500",
+  purple: "bg-purple-500",
+  gray: "bg-gray-500",
+};
+
 export const PropertyPanel: React.FC = () => {
   // 获取选中的节点 ID
   const selectedNodeId = useWorkflowStore((state) => state.selectedNodeId);
@@ -64,11 +77,14 @@ export const PropertyPanel: React.FC = () => {
       </div>
     );
   };
+  // 获取图标颜色
+  const iconBgClass = iconColorClasses[nodeConfig.iconColor || "blue"];
 
   return (
     <div
       className="w-96 bg-white rounded-lg shadow-lg border border-gray-200
-                  flex flex-col h-[calc(100vh-240px)] overflow-hidden"
+                  flex flex-col h-[calc(100vh-240px)] overflow-hidden "
+      data-panel="property"
     >
       {/* 面板头部 */}
       <div
@@ -78,7 +94,11 @@ export const PropertyPanel: React.FC = () => {
       >
         <div className="flex items-center gap-2">
           {/* 节点图标 */}
-          <span className="text-lg">{nodeConfig?.icon}</span>
+          <div
+            className={`w-8 h-8 rounded-lg ${iconBgClass} flex items-center justify-center text-white text-sm`}
+          >
+            {nodeConfig.icon}
+          </div>
           {/* 节点类型名称 */}
           <span className="font-medium text-gray-800">{nodeConfig?.label}</span>
         </div>
