@@ -88,6 +88,7 @@ export function registerAllNodes(): void {
     label: '代码',
     language: 'javascript',
     code: '// 在这里编写代码\nreturn { result: "Hello World" };',
+    outputs:[]
   },
 });
 
@@ -115,6 +116,7 @@ nodeRegistry.register<LLMNodeData>({
     prompt: '',                 // 提示词
     outputs: [                  // 默认输出变量
       {
+        id: 'llm_output',
         name: 'text',
         type: 'string',
         description: '生成内容',

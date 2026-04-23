@@ -1,4 +1,4 @@
-import { InputVariable } from "@/lib/workflow";
+import { type WorkflowVariable } from "@/lib/workflow/variableUtils";
 import { SearchOutlined } from "@ant-design/icons";
 import { Input } from "antd";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,7 +10,7 @@ export interface VariableSelectorProps {
   visible: boolean;
   onSelect: (variableName: string) => void;
   onClose: () => void;
-  variables: InputVariable[];
+  variables: WorkflowVariable[];
 }
 
 export const VariableSelector: React.FC<VariableSelectorProps> = ({
@@ -91,6 +91,9 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
                   </span>
                   <span className="text-gray-800 font-medium">
                     {variable.name}
+                  </span>
+                  <span className="text-gray-400 text-xs">
+                    来自: {variable.sourceNodeLabel}
                   </span>
                 </div>
                 <span className="text-gray-400 text-xs">{variable.type}</span>

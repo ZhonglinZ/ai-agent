@@ -27,6 +27,7 @@ import type {
 import { NodeType } from "@/lib/workflow/types";
 import { ModelParamsPanel } from "./ModalParamsPanel";
 import { VariableSelector } from "./VariableSelector";
+import { getAvailableVariables } from "@/lib/workflow/variableUtils";
 
 const { TextArea } = Input;
 
@@ -53,12 +54,11 @@ export const LLMPropertyPanel: React.FC<PropertyPanelProps<LLMNodeData>> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // 获取开始节点的输入变量
-  const startNodeVariables = useMemo(() => {
-    const startNode = nodes.find((node) => node.type === NodeType.START);
-    if (!startNode) return [];
-    const startData = startNode.data as StartNodeData;
-    return startData.inputs || [];
-  }, [nodes]);
+  const edges = useWorkflowStore((state) => state.edges); // 新增：获取边
+
+  const availableVariables = useMemo(() => {
+    return getAvailableVariables(nodeId, nodes, edges);
+  }, [nodeId, nodes, edges]);
 
   // 获取当前选择的模型名称
   const selectedModel = useMemo(() => {
@@ -163,7 +163,7 @@ export const LLMPropertyPanel: React.FC<PropertyPanelProps<LLMNodeData>> = ({
             visible={showVariableSelector}
             onSelect={handleSelectVariable}
             onClose={() => setShowVariableSelector(false)}
-            variables={startNodeVariables}
+            variables={availableVariables}
           />
         </div>
       </div>
@@ -241,10 +241,10 @@ export const LLMPropertyPanel: React.FC<PropertyPanelProps<LLMNodeData>> = ({
       >
         <div className="space-y-3">
           {/* 变量快速选择 */}
-          {startNodeVariables.length > 0 && (
+          {availableVariables.length > 0 && (
             <div className="flex flex-wrap gap-2 pb-2">
               <span className="text-xs text-gray-500">可用变量：</span>
-              {startNodeVariables.map((variable) => (
+              {availableVariables.map((variable) => (
                 <button
                   key={variable.id}
                   className="px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100"

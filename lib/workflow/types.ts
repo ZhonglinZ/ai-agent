@@ -119,6 +119,8 @@ export interface CodeNodeData extends BaseNodeData {
  * 输出变量定义
  */
 export interface LLMOutputVariable {
+  /** 变量唯一标识 */
+  id: string;
   /** 变量名 */
   name: string;
   /** 变量类型 */
