@@ -91,8 +91,7 @@ const CanvasContent: React.FC = () => {
       // dimensions: ReactFlow 内部自动调整的节点尺寸，不应该被记录
       // position: 由 onNodeDragStop 统一处理
       const importantChanges = changes.filter(
-        (change: any) =>
-          change.type !== "dimensions" && change.type !== "position"
+        (change: any) => change.type !== "dimensions"
       );
 
       if (importantChanges.length > 0) {

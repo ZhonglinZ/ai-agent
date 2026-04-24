@@ -62,7 +62,6 @@ export const APINode: React.FC<APINodeProps> = ({ id, data, selected }) => {
   // 判断是否已配置 URL
   const isConfigured = data.url && data.url.trim() !== "";
 
-  // ... 渲染代码
   return (
     <div
       className={`
@@ -109,7 +108,69 @@ export const APINode: React.FC<APINodeProps> = ({ id, data, selected }) => {
         </div>
       </div>
 
-      {/* 输入/输出区域 - 省略，与 LLM 节点类似 */}
+      {/* 输入区域 */}
+      <div className="mx-3 mb-2">
+        <div
+          className="flex items-center gap-1 cursor-pointer select-none py-1"
+          onClick={() => setShowInputs(!showInputs)}
+        >
+          <span className="text-xs text-gray-600 font-medium">输入</span>
+          {showInputs ? (
+            <DownOutlined className="text-[10px] text-gray-400" />
+          ) : (
+            <RightOutlined className="text-[10px] text-gray-400" />
+          )}
+        </div>
+
+        {showInputs && (
+          <div className="mt-1 space-y-1">
+            {inputVariables.length > 0 ? (
+              inputVariables.map((variable, index) => (
+                <div
+                  key={`${variable.name}-${index}`}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <span className="text-gray-800 font-medium">
+                    {variable.name}
+                  </span>
+                  <span className="text-gray-400">{variable.type}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-gray-400">未配置变量</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 输出区域 */}
+      <div className="mx-3 mb-3">
+        <div
+          className="flex items-center gap-1 cursor-pointer select-none py-1"
+          onClick={() => setShowOutputs(!showOutputs)}
+        >
+          <span className="text-xs text-gray-600 font-medium">输出</span>
+          {showOutputs ? (
+            <DownOutlined className="text-[10px] text-gray-400" />
+          ) : (
+            <RightOutlined className="text-[10px] text-gray-400" />
+          )}
+        </div>
+
+        {showOutputs && data.outputs && data.outputs.length > 0 && (
+          <div className="mt-1 space-y-1">
+            {data.outputs.map((output) => (
+              <div
+                key={output.name}
+                className="flex items-center gap-2 text-xs"
+              >
+                <span className="text-gray-800 font-medium">{output.name}</span>
+                <span className="text-gray-400">{output.type}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* 输出连接点 */}
       <Handle

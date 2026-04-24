@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { temporal } from 'zundo';
+import { create } from "zustand";
+import { temporal } from "zundo";
 import {
   applyNodeChanges,
   applyEdgeChanges,
@@ -7,11 +7,15 @@ import {
   type NodeChange,
   type EdgeChange,
   type Connection,
-} from '@xyflow/react';
-import type { Workflow } from '@/lib/types/workflow';
-import type { WorkflowNode, WorkflowEdge, WorkflowNodeData } from '@/lib/workflow/types';
-import { NodeType } from '@/lib/workflow/types';
-import { nodeRegistry } from '@/lib/workflow/nodeRegistry';
+} from "@xyflow/react";
+import type { Workflow } from "@/lib/types/workflow";
+import type {
+  WorkflowNode,
+  WorkflowEdge,
+  WorkflowNodeData,
+} from "@/lib/workflow/types";
+import { NodeType } from "@/lib/workflow/types";
+import { nodeRegistry } from "@/lib/workflow/nodeRegistry";
 /**
  * 工作流编辑器状态接口
  * 管理工作流的基本信息、画布节点和编辑状态
@@ -97,9 +101,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       updateWorkflow: (updates) =>
         set((state) => ({
-          workflow: state.workflow
-            ? { ...state.workflow, ...updates }
-            : null,
+          workflow: state.workflow ? { ...state.workflow, ...updates } : null,
           isDirty: true,
         })),
 
@@ -116,7 +118,7 @@ export const useWorkflowStore = create<WorkflowState>()(
       setEdges: (edges) => set({ edges }),
 
       onNodesChange: (changes) => {
-        console.log('=== onNodesChange 节点 触发===');
+        console.log("=== onNodesChange 节点 触发===");
         set((state) => ({
           nodes: applyNodeChanges(changes, state.nodes),
           isDirty: true,
@@ -135,7 +137,7 @@ export const useWorkflowStore = create<WorkflowState>()(
           edges: addEdge(
             {
               ...connection,
-              type: 'smoothstep',
+              type: "smoothstep",
               animated: false,
             },
             state.edges
@@ -181,7 +183,8 @@ export const useWorkflowStore = create<WorkflowState>()(
           edges: state.edges.filter(
             (edge) => edge.source !== nodeId && edge.target !== nodeId
           ),
-          selectedNodeId: state.selectedNodeId === nodeId ? null : state.selectedNodeId,
+          selectedNodeId:
+            state.selectedNodeId === nodeId ? null : state.selectedNodeId,
           isDirty: true,
         }));
       },
@@ -202,7 +205,9 @@ export const useWorkflowStore = create<WorkflowState>()(
       }),
       // 在保存状态时，过滤掉节点的 width, height, measured 等属性
       onSave: (state) => ({
-        nodes: state.nodes.map(({ width, height, measured, ...rest }) => rest),
+        nodes: state.nodes.map(
+          ({ width, height, measured, selected, ...rest }) => rest
+        ),
         edges: state.edges,
       }),
       // 限制历史记录数量，防止内存占用过大
