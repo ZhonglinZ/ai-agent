@@ -1,8 +1,8 @@
 import React from 'react';
-import { CodeOutlined, PlayCircleOutlined, RobotOutlined, StopOutlined } from '@ant-design/icons';
+import { ApiOutlined, CodeOutlined, PlayCircleOutlined, RobotOutlined, StopOutlined } from '@ant-design/icons';
 import { nodeRegistry } from './nodeRegistry';
 import { NodeType } from './types';
-import type { StartNodeData, EndNodeData, CodeNodeData, LLMNodeData } from './types';
+import type { StartNodeData, EndNodeData, CodeNodeData, LLMNodeData, APINodeData } from './types';
 import { StartNode } from '@/components/workflow/nodes/StartNode';
 import { EndNode } from '@/components/workflow/nodes/EndNode';
 import { CodeNode } from '@/components/workflow/nodes/CodeNode';
@@ -10,6 +10,8 @@ import { StartPropertyPanel } from '@/components/workflow/panels/StartNodeProper
 import { EndPropertyPanel } from '@/components/workflow/panels/EndNodePropertyPanel';
 import { LLMNode } from '@/components/workflow/nodes';
 import { LLMPropertyPanel } from '@/components/workflow/panels';
+import { APINode } from '@/components/workflow/nodes/APINode';
+import { APIPropertyPanel } from '@/components/workflow/panels/apiPanel';
 
 /**
  * 注册所有节点类型
@@ -121,6 +123,39 @@ nodeRegistry.register<LLMNodeData>({
         type: 'string',
         description: '生成内容',
       },
+    ],
+  },
+});
+
+// ==================== 注册 API 节点 ====================
+nodeRegistry.register<APINodeData>({
+  type: NodeType.API,
+  label: 'API',
+  description: '发送 HTTP 请求，支持 GET/POST/PUT/DELETE/PATCH',
+  icon: React.createElement(ApiOutlined),
+  iconColor: 'green',
+  category: 'action',
+  component: APINode,
+  propertyPanel: APIPropertyPanel,
+  maxInputs: 1,
+  maxOutputs: 1,
+  defaultData: {
+    label: 'API',
+    method: 'GET',
+    url: '',
+    params: [],
+    headers: [],
+    authEnabled: false,
+    bodyType: 'none',
+    bodyFormData: [],
+    bodyJson: '',
+    bodyRaw: '',
+    timeout: 120,
+    retryCount: 3,
+    outputs: [
+      { id: 'body', name: 'body', type: 'string', description: '响应内容' },
+      { id: 'status_code', name: 'status_code', type: 'number', description: '响应状态码' },
+      { id: 'headers', name: 'headers', type: 'object', description: '响应头列表 JSON' },
     ],
   },
 });

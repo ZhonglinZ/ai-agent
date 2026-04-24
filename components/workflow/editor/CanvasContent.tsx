@@ -28,6 +28,7 @@ import {
   PlacingNodePreview,
 } from "@/components/workflow/toolbar";
 import { useStore } from "zustand";
+import { APINode } from "../nodes/APINode";
 
 // 确保节点已注册
 initializeNodeRegistry();
@@ -38,6 +39,7 @@ const nodeTypes: NodeTypes = {
   [NodeType.END]: EndNode,
   [NodeType.CODE]: CodeNode,
   [NodeType.LLM]: LLMNode,
+  [NodeType.API]: APINode,
 };
 /**
  * 画布内部组件

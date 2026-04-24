@@ -7,8 +7,18 @@
  * 3. 变量引用格式处理
  */
 
-import type { WorkflowNode, WorkflowEdge, WorkflowNodeData } from './types';
-import { NodeType, type StartNodeData, type LLMNodeData, type CodeNodeData } from './types';
+import type {
+  WorkflowNode,
+  WorkflowEdge,
+  WorkflowNodeData,
+  APINodeData,
+} from "./types";
+import {
+  NodeType,
+  type StartNodeData,
+  type LLMNodeData,
+  type CodeNodeData,
+} from "./types";
 
 // ==================== 类型定义 ====================
 
@@ -43,7 +53,10 @@ export interface WorkflowVariable {
  * @param edges - 工作流的所有边
  * @returns 所有上游节点的 ID 列表
  */
-export function getUpstreamNodeIds(nodeId: string, edges: WorkflowEdge[]): string[] {
+export function getUpstreamNodeIds(
+  nodeId: string,
+  edges: WorkflowEdge[]
+): string[] {
   const result: string[] = [];
   const visited = new Set<string>();
   const queue: string[] = [nodeId];
@@ -80,7 +93,10 @@ export function getUpstreamNodeIds(nodeId: string, edges: WorkflowEdge[]): strin
  */
 export function extractNodeOutputs(
   node: WorkflowNode
-): Omit<WorkflowVariable, 'sourceNodeId' | 'sourceNodeLabel' | 'sourceNodeType'>[] {
+): Omit<
+  WorkflowVariable,
+  "sourceNodeId" | "sourceNodeLabel" | "sourceNodeType"
+>[] {
   const data = node.data as WorkflowNodeData;
 
   switch (node.type) {
@@ -109,10 +125,23 @@ export function extractNodeOutputs(
     case NodeType.CODE: {
       // 代码节点的输出变量
       const codeData = data as CodeNodeData;
-      return (codeData.outputs as WorkflowVariable[] || []).map((output: any) => ({
-        id: output.id,
+      return ((codeData.outputs as WorkflowVariable[]) || []).map(
+        (output: any) => ({
+          id: output.id,
+          name: output.name,
+          type: output.type,
+        })
+      );
+    }
+
+    case NodeType.API: {
+      // API 节点的输出变量（body, status_code, headers）
+      const apiData = data as APINodeData;
+      return (apiData.outputs || []).map((output, index) => ({
+        id: `${node.id}-output-${index}`,
         name: output.name,
         type: output.type,
+        description: output.description,
       }));
     }
 
@@ -157,7 +186,8 @@ export function getAvailableVariables(
       variables.push({
         ...output,
         sourceNodeId: node.id,
-        sourceNodeLabel: (node.data as WorkflowNodeData).label || node.type || '未知节点',
+        sourceNodeLabel:
+          (node.data as WorkflowNodeData).label || node.type || "未知节点",
         sourceNodeType: node.type as NodeType,
       });
     }
@@ -165,4 +195,3 @@ export function getAvailableVariables(
 
   return variables;
 }
-
