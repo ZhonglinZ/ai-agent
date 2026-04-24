@@ -293,6 +293,9 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
+  const [showSelector, setShowSelector] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const cursorPosRef = useRef<number>(0);
 
   const handleOpenFullscreen = () => {
     setTempValue(value);
@@ -304,16 +307,48 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
     setIsFullscreen(false);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "/") {
+      e.preventDefault(); // 阻止 '/' 字符输入到搜索框
+      cursorPosRef.current = e.currentTarget.selectionStart || 0;
+      setShowSelector(true);
+    }
+  };
+
+  const handleSelectVariable = (varName: string) => {
+    const before = value.slice(0, cursorPosRef.current);
+    const after = value.slice(cursorPosRef.current);
+    // 移除触发的 '/' 字符（如果有的话）
+    const newBefore = before.endsWith("/") ? before.slice(0, -1) : before;
+    onChange(`${newBefore}{{${varName}}}${after}`);
+    setShowSelector(false);
+  };
+
+  const editorContent = (
+    <div className="relative">
+      <TextArea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder='{\n  "key": "value"\n}'
+        rows={isFullscreen ? 20 : 6}
+        className="font-mono text-sm"
+        style={{ resize: "none" }}
+      />
+      <VariableSelector
+        visible={showSelector}
+        onSelect={handleSelectVariable}
+        onClose={() => setShowSelector(false)}
+        variables={variables}
+        anchorRef={wrapperRef as React.RefObject<HTMLElement | null>}
+      />
+    </div>
+  );
+
   return (
     <>
-      <div className="relative">
-        <TextArea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder='{"key": "value"}'
-          rows={4}
-          className="font-mono text-sm"
-        />
+      <div className="relative" ref={wrapperRef}>
+        {editorContent}
         <button
           onClick={handleOpenFullscreen}
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
