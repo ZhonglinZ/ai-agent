@@ -123,15 +123,13 @@ export function extractNodeOutputs(
     }
 
     case NodeType.CODE: {
-      // 代码节点的输出变量
       const codeData = data as CodeNodeData;
-      return ((codeData.outputs as WorkflowVariable[]) || []).map(
-        (output: any) => ({
-          id: output.id,
-          name: output.name,
-          type: output.type,
-        })
-      );
+      return (codeData.outputs || []).map((output, index) => ({
+        id: `${node.id}-output-${index}`,
+        name: output.name,
+        type: output.type,
+        description: `代码节点输出: ${output.name}`,
+      }));
     }
 
     case NodeType.API: {

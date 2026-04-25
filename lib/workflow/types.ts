@@ -4,16 +4,16 @@
  * 这个文件定义了工作流编辑器中所有节点相关的类型
  */
 
-import type { Node, Edge } from '@xyflow/react';
-import type { ReactNode } from 'react';
+import type { Node, Edge } from "@xyflow/react";
+import type { ReactNode } from "react";
 
 export enum NodeType {
-  START = 'start',
-  END = 'end',
-  CODE = 'code',
+  START = "start",
+  END = "end",
+  CODE = "code",
   /** 大模型节点 - 调用 LLM 生成内容 */
-  LLM = 'llm',  // 新增
-  API = 'api',
+  LLM = "llm", // 新增
+  API = "api",
   // ========== 后续扩展 ==========
   // HTTP_REQUEST = 'httpRequest',
   // CONDITION = 'condition',
@@ -24,21 +24,21 @@ export enum NodeType {
  * 用于在左侧节点面板中对节点进行分组显示
  */
 export type NodeCategory =
-  | 'trigger'    // 触发器：开始节点等
-  | 'action'     // 动作：HTTP请求、发送邮件等
-  | 'logic'      // 逻辑：条件判断、循环等
-  | 'transform'  // 转换：数据处理、格式转换等
-  | 'end';       // 结束：结束节点
+  | "trigger" // 触发器：开始节点等
+  | "action" // 动作：HTTP请求、发送邮件等
+  | "logic" // 逻辑：条件判断、循环等
+  | "transform" // 转换：数据处理、格式转换等
+  | "end"; // 结束：结束节点
 
 /**
  * 分类中文名映射
  */
 export const categoryLabels: Record<NodeCategory, string> = {
-  trigger: '触发器',
-  action: '动作',
-  logic: '逻辑控制',
-  transform: '数据转换',
-  end: '结束',
+  trigger: "触发器",
+  action: "动作",
+  logic: "逻辑控制",
+  transform: "数据转换",
+  end: "结束",
 };
 
 /**
@@ -58,7 +58,12 @@ export interface BaseNodeData {
 /**
  * 输入变量类型
  */
-export type InputVariableType = 'string' | 'number' | 'boolean' | 'object' | 'array';
+export type InputVariableType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "object"
+  | "array";
 
 /**
  * 输入变量定义（用于开始节点）
@@ -82,7 +87,7 @@ export interface InputVariable {
  */
 export interface StartNodeData extends BaseNodeData {
   /** 触发方式：manual-手动触发，schedule-定时触发，webhook-Webhook触发 */
-  triggerType: 'manual' | 'schedule' | 'webhook';
+  triggerType: "manual" | "schedule" | "webhook";
   /** 输入变量列表 */
   inputs: InputVariable[];
 }
@@ -103,17 +108,39 @@ export interface EndOutputVariable {
  */
 export interface EndNodeData extends BaseNodeData {
   /** 结束状态：success-成功，failure-失败 */
-  endStatus: 'success' | 'failure';
+  endStatus: "success" | "failure";
   /** 输出变量列表 */
   outputVariables: EndOutputVariable[];
 }
+/**
+ * 代码节点输入变量
+ */
+export interface CodeInputVariable {
+  /** 唯一标识 */
+  id: string;
+  /** 变量名，如 arg1, arg2 */
+  name: string;
+  /** 变量值，可以是字面量或变量引用如 {{开始.input}} */
+  value: string;
+}
 
+/**
+ * 代码节点输出变量
+ */
+export interface CodeOutputVariable {
+  /** 变量名 */
+  name: string;
+  /** 变量类型 */
+  type: string;
+}
 /**
  * 代码节点数据
  */
 export interface CodeNodeData extends BaseNodeData {
-  language: 'javascript' | 'python' ;
+  language: "javascript" | "python3";
   code: string;
+  inputs: CodeInputVariable[];
+  outputs: CodeOutputVariable[];
 }
 
 /**
@@ -125,7 +152,7 @@ export interface LLMOutputVariable {
   /** 变量名 */
   name: string;
   /** 变量类型 */
-  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  type: "string" | "number" | "boolean" | "object" | "array";
   /** 变量描述 */
   description?: string;
 }
@@ -155,12 +182,17 @@ export interface LLMNodeData extends BaseNodeData {
 /**
  * HTTP 请求方法
  */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 /**
  * 请求体类型
  */
-export type BodyType = 'none' | 'form-data' | 'json' | 'raw' | 'x-www-form-urlencoded';
+export type BodyType =
+  | "none"
+  | "form-data"
+  | "json"
+  | "raw"
+  | "x-www-form-urlencoded";
 
 /**
  * 键值对（用于 params、headers、form-data）
@@ -178,7 +210,7 @@ export interface KeyValuePair {
 export interface APIOutputVariable {
   id: string;
   name: string;
-  type: 'string' | 'number' | 'object';
+  type: "string" | "number" | "object";
   description: string;
 }
 
@@ -197,7 +229,7 @@ export interface APINodeData extends BaseNodeData {
   /** 是否启用鉴权 */
   authEnabled: boolean;
   /** 鉴权类型 */
-  authType?: 'basic' | 'bearer' | 'api-key';
+  authType?: "basic" | "bearer" | "api-key";
   /** 鉴权值 */
   authValue?: string;
   /** 请求体类型 */
@@ -219,7 +251,12 @@ export interface APINodeData extends BaseNodeData {
  * 所有节点数据的联合类型
  * 添加新节点时，需要在这里添加对应的数据类型
  */
-export type WorkflowNodeData = StartNodeData | EndNodeData | CodeNodeData | LLMNodeData | APINodeData;
+export type WorkflowNodeData =
+  | StartNodeData
+  | EndNodeData
+  | CodeNodeData
+  | LLMNodeData
+  | APINodeData;
 
 /**
  * 工作流节点类型
@@ -236,7 +273,7 @@ export type WorkflowEdge = Edge;
 /**
  * 图标颜色类型
  */
-export type IconColor = 'blue' | 'green' | 'red' | 'orange' | 'purple' | 'gray';
+export type IconColor = "blue" | "green" | "red" | "orange" | "purple" | "gray";
 
 /**
  * 节点配置接口
@@ -262,7 +299,7 @@ export interface NodeConfig<T extends WorkflowNodeData = WorkflowNodeData> {
   iconColor?: IconColor;
   /** 节点组件 */
   component: React.ComponentType<{ data: T; id: string; selected?: boolean }>;
-   /**
+  /**
    * 属性面板配置（二选一）
    * - formSchema: 简单表单使用配置驱动
    * - propertyPanel: 复杂表单使用自定义组件
@@ -286,15 +323,15 @@ export interface NodeConfig<T extends WorkflowNodeData = WorkflowNodeData> {
  * 用于动态表单渲染
  */
 export type FormFieldType =
-  | 'input'      // 单行文本
-  | 'textarea'   // 多行文本
-  | 'select'     // 下拉选择
-  | 'switch'     // 开关
-  | 'number'     // 数字输入
-  | 'radio'      // 单选
-  | 'checkbox';  // 多选
+  | "input" // 单行文本
+  | "textarea" // 多行文本
+  | "select" // 下拉选择
+  | "switch" // 开关
+  | "number" // 数字输入
+  | "radio" // 单选
+  | "checkbox"; // 多选
 
-  /**
+/**
  * 表单字段选项（用于 select、radio、checkbox）
  */
 export interface FormFieldOption {
@@ -330,10 +367,11 @@ export interface FormField {
 /**
  * 属性面板组件的 Props
  */
-export interface PropertyPanelProps<T extends WorkflowNodeData = WorkflowNodeData> {
+export interface PropertyPanelProps<
+  T extends WorkflowNodeData = WorkflowNodeData
+> {
   /** 节点 ID */
   nodeId: string;
   /** 节点数据 */
   data: T;
 }
-
