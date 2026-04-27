@@ -5,7 +5,7 @@
  */
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useStore } from "zustand";
 import { Button, Popover, Tooltip, Divider } from "antd";
@@ -19,6 +19,10 @@ import {
 } from "@ant-design/icons";
 import { NodeSelector } from "./NodeSelector";
 import { useWorkflowStore } from "@/lib/stores/workflowStore";
+import { Badge } from "antd";
+import { CheckSquareOutlined } from "@ant-design/icons";
+import { ValidationChecklist } from "./ValidationCheckList";
+import { validateWorkflowNodes } from "@/lib/workflow";
 
 /**
  * 画布工具栏
@@ -34,14 +38,25 @@ export const CanvasToolbar: React.FC = () => {
   // 获取撤销/重做相关方法
   const { undo, redo } = useWorkflowStore.temporal.getState();
 
+  // 验证清单是否打开
+  const [validationChecklistOpen, setValidationChecklistOpen] = useState(false);
+
+  // 3. 获取节点和边数据
+  const { nodes, edges } = useWorkflowStore();
+
+  // 4. 计算验证问题数量
+  const issueCount = useMemo(() => {
+    return validateWorkflowNodes(nodes, edges).issues.length;
+  }, [nodes, edges]);
+
   // 订阅 temporal store 的状态变化，获取历史记录长度
   const canUndo = useStore(
     useWorkflowStore.temporal,
-    (state) => state.pastStates.length > 0
+    (state) => state.pastStates.length > 0,
   );
   const canRedo = useStore(
     useWorkflowStore.temporal,
-    (state) => state.futureStates.length > 0
+    (state) => state.futureStates.length > 0,
   );
 
   // 处理节点选择后关闭弹窗
@@ -171,6 +186,22 @@ export const CanvasToolbar: React.FC = () => {
           disabled={!canRedo}
         />
       </Tooltip>
+
+      <Tooltip title="检查清单">
+        <Badge count={issueCount} offset={[-5, 5]} size="small">
+          <Button
+            type="text"
+            icon={<CheckSquareOutlined />}
+            className="text-gray-500 hover:text-gray-700"
+            onClick={() => setValidationChecklistOpen(true)}
+          />
+        </Badge>
+      </Tooltip>
+
+      <ValidationChecklist
+        open={validationChecklistOpen}
+        onClose={() => setValidationChecklistOpen(false)}
+      />
     </div>
   );
 };
