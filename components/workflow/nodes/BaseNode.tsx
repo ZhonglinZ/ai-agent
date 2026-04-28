@@ -64,7 +64,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
         <Handle
           type="target"
           position={Position.Left}
-          className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white"
+          className="w-3! h-3! bg-gray-400! border-2! border-white!"
         />
       )}
 
@@ -100,7 +100,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
         <Handle
           type="source"
           position={Position.Right}
-          className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white"
+          className="w-3! h-3! bg-gray-400! border-2! border-white!"
         />
       )}
     </div>

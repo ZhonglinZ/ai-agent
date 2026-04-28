@@ -143,6 +143,10 @@ export function extractNodeOutputs(
       }));
     }
 
+    case NodeType.BRANCH: {
+      return []
+    }
+
     default:
       return [];
   }

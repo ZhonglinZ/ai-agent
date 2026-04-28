@@ -54,7 +54,7 @@ export const APINode: React.FC<APINodeProps> = ({ id, data, selected }) => {
 
     // 去重
     const uniqueVars = Array.from(
-      new Map(variables.map((v) => [v.name, v])).values()
+      new Map(variables.map((v) => [v.name, v])).values(),
     );
     return uniqueVars;
   }, [data]);
@@ -76,7 +76,7 @@ export const APINode: React.FC<APINodeProps> = ({ id, data, selected }) => {
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white"
+        className="w-3! h-3! bg-gray-400! border-2! border-white!"
       />
 
       {/* 节点头部 */}
@@ -176,7 +176,7 @@ export const APINode: React.FC<APINodeProps> = ({ id, data, selected }) => {
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white"
+        className="w-3! h-3! bg-gray-400! border-2! border-white!"
       />
     </div>
   );

@@ -14,6 +14,7 @@ export enum NodeType {
   /** 大模型节点 - 调用 LLM 生成内容 */
   LLM = "llm", // 新增
   API = "api",
+  BRANCH = "branch",
   // ========== 后续扩展 ==========
   // HTTP_REQUEST = 'httpRequest',
   // CONDITION = 'condition',
@@ -247,6 +248,30 @@ export interface APINodeData extends BaseNodeData {
   /** 输出变量 */
   outputs: APIOutputVariable[];
 }
+
+/**
+ * 分支器节点 - 条件分支
+ */
+export interface BranchCondition {
+  /** 唯一标识 */
+  id: string;
+  /** 分支标签，如 "如果"、"否则如果" */
+  label: string;
+  /** 条件表达式（可选，用于后续执行） */
+  condition?: string;
+}
+
+/**
+ * 分支器节点数据
+ */
+export interface BranchNodeData extends BaseNodeData {
+  /** 条件分支列表（如果、否则如果） */
+  branches: BranchCondition[];
+  /** 是否显示默认分支（否则） */
+  showElseBranch: boolean;
+}
+
+
 /**
  * 所有节点数据的联合类型
  * 添加新节点时，需要在这里添加对应的数据类型
@@ -256,7 +281,8 @@ export type WorkflowNodeData =
   | EndNodeData
   | CodeNodeData
   | LLMNodeData
-  | APINodeData;
+  | APINodeData
+  | BranchNodeData;
 
 /**
  * 工作流节点类型

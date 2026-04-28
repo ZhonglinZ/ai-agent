@@ -1,5 +1,6 @@
 import {
   APINodeData,
+  BranchNodeData,
   CodeNodeData,
   EndNodeData,
   LLMNodeData,
@@ -135,6 +136,27 @@ function validateCodeNode(node: WorkflowNode, edges: WorkflowEdge[]): Validation
 }
 
 /**
+ * 验证分支器节点
+ */
+function validateBranchNode(node: WorkflowNode, edges: WorkflowEdge[]): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const data = node.data as BranchNodeData;
+
+  if (!hasInputConnection(node.id, edges)) {
+    issues.push(createIssue(node, "此节点尚未连接到其他节点", "missing_connection"));
+  }
+
+  const hasEmptyCondition = (data.branches ?? []).some(
+    (branch) => !branch.condition?.trim()
+  );
+  if (hasEmptyCondition) {
+    issues.push(createIssue(node, "条件不能为空"));
+  }
+
+  return issues;
+}
+
+/**
  * 验证整个工作流
  */
 export function validateWorkflowNodes(
@@ -156,6 +178,9 @@ export function validateWorkflowNodes(
         break;
       case NodeType.CODE:
         issues.push(...validateCodeNode(node, edges));
+        break;
+      case NodeType.BRANCH:
+        issues.push(...validateBranchNode(node, edges));
         break;
       default:
         break;

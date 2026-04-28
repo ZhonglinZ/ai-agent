@@ -29,6 +29,7 @@ import {
 } from "@/components/workflow/toolbar";
 import { useStore } from "zustand";
 import { APINode } from "../nodes/APINode";
+import { BranchNode } from "../nodes/BranchNode";
 
 // 确保节点已注册
 initializeNodeRegistry();
@@ -40,6 +41,7 @@ const nodeTypes: NodeTypes = {
   [NodeType.CODE]: CodeNode,
   [NodeType.LLM]: LLMNode,
   [NodeType.API]: APINode,
+  [NodeType.BRANCH]: BranchNode,
 };
 /**
  * 画布内部组件
@@ -91,14 +93,14 @@ const CanvasContent: React.FC = () => {
       // dimensions: ReactFlow 内部自动调整的节点尺寸，不应该被记录
       // position: 由 onNodeDragStop 统一处理
       const importantChanges = changes.filter(
-        (change: any) => change.type !== "dimensions"
+        (change: any) => change.type !== "dimensions",
       );
 
       if (importantChanges.length > 0) {
         onNodesChange(importantChanges);
       }
     },
-    [onNodesChange]
+    [onNodesChange],
   );
 
   // 处理节点拖拽结束 - 同步最终位置到 store
@@ -113,7 +115,7 @@ const CanvasContent: React.FC = () => {
         },
       ]);
     },
-    [onNodesChange]
+    [onNodesChange],
   );
 
   // 处理节点点击
@@ -121,7 +123,7 @@ const CanvasContent: React.FC = () => {
     (_event, node) => {
       setSelectedNodeId(node.id);
     },
-    [setSelectedNodeId]
+    [setSelectedNodeId],
   );
 
   // 处理画布点击（核心：放置节点）
@@ -158,7 +160,7 @@ const CanvasContent: React.FC = () => {
       addNode,
       cancelPlacingNode,
       setSelectedNodeId,
-    ]
+    ],
   );
 
   // 处理键盘事件（ESC 取消放置）
