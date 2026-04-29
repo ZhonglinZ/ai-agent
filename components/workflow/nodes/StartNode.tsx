@@ -7,7 +7,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Handle, Position } from "@xyflow/react";
+import { Position } from "@xyflow/react";
+import { CustomHandle } from "./CustomHandle";
 import {
   PlayCircleOutlined,
   DownOutlined,
@@ -96,12 +97,8 @@ export const StartNode: React.FC<StartNodeProps> = ({ data, selected }) => {
         )}
       </div>
 
-      {/* 输出连接点 */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="w-3 h-3 bg-blue-500 border-2 border-white"
-      />
+      {/* 输出连接点：未连线显示加号，已连线为实心点（见 CustomHandle） */}
+      <CustomHandle type="source" position={Position.Right} id="start-source" />
     </div>
   );
 };

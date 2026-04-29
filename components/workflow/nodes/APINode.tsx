@@ -8,8 +8,9 @@
 
 import React, { useState, useMemo } from "react";
 import { ApiOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
-import { Handle, Position } from "@xyflow/react";
+import { Position } from "@xyflow/react";
 import type { APINodeData } from "@/lib/workflow/types";
+import { CustomHandle } from "./CustomHandle";
 
 interface APINodeProps {
   id: string;
@@ -73,11 +74,7 @@ export const APINode: React.FC<APINodeProps> = ({ id, data, selected }) => {
     `}
     >
       {/* 输入连接点 */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="w-3! h-3! bg-gray-400! border-2! border-white!"
-      />
+      <CustomHandle type="target" position={Position.Left} />
 
       {/* 节点头部 */}
       <div className="flex items-center gap-3 p-3 pb-2">
@@ -173,11 +170,7 @@ export const APINode: React.FC<APINodeProps> = ({ id, data, selected }) => {
       </div>
 
       {/* 输出连接点 */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="w-3! h-3! bg-gray-400! border-2! border-white!"
-      />
+      <CustomHandle type="source" position={Position.Right} />
     </div>
   );
 };

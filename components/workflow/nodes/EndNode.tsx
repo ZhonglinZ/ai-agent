@@ -7,9 +7,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Handle, Position } from "@xyflow/react";
+import { Position } from "@xyflow/react";
 import { StopOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
 import type { EndNodeData } from "@/lib/workflow/types";
+import { CustomHandle } from "./CustomHandle";
 
 interface EndNodeProps {
   id: string;
@@ -35,11 +36,7 @@ export const EndNode: React.FC<EndNodeProps> = ({ data, selected }) => {
       `}
     >
       {/* 输入连接点 */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="w-3 h-3 bg-blue-500 border-2 border-white"
-      />
+      <CustomHandle type="target" position={Position.Left} />
 
       {/* 头部：图标 + 标题 */}
       <div className="flex items-center gap-3 p-3 pb-2">

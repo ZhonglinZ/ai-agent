@@ -8,7 +8,8 @@
 import React, { useState } from "react";
 import { CodeOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
 import type { CodeNodeData } from "@/lib/workflow/types";
-import { Handle, Position } from "@xyflow/react";
+import { Position } from "@xyflow/react";
+import { CustomHandle } from "./CustomHandle";
 
 interface CodeNodeProps {
   id: string;
@@ -32,7 +33,7 @@ export const CodeNode: React.FC<CodeNodeProps> = ({ id, data, selected }) => {
     `}
     >
       {/* 输入连接点 */}
-      <Handle type="target" position={Position.Left} />
+      <CustomHandle type="target" position={Position.Left} />
 
       {/* 节点头部 */}
       <div className="flex items-center gap-3 p-3 pb-2">
@@ -93,7 +94,7 @@ export const CodeNode: React.FC<CodeNodeProps> = ({ id, data, selected }) => {
       )}
 
       {/* 输出连接点 */}
-      <Handle type="source" position={Position.Right} />
+      <CustomHandle type="source" position={Position.Right} />
     </div>
   );
 };

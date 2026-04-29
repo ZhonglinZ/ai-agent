@@ -4,6 +4,7 @@ import React from "react";
 import { BranchesOutlined } from "@ant-design/icons";
 import { Handle, Position } from "@xyflow/react";
 import type { BranchNodeData } from "@/lib/workflow/types";
+import { CustomHandle } from "./CustomHandle";
 
 interface BranchNodeProps {
   data: BranchNodeData;
@@ -20,12 +21,7 @@ export const BranchNode: React.FC<BranchNodeProps> = ({ data, selected }) => {
     `}
     >
       {/* 输入连接点 */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="w-3 h-3 bg-gray-400 border-2 border-white"
-      />
-
+      <CustomHandle type="target" position={Position.Left} />
       {/* 节点头部 */}
       <div className="flex items-center gap-3 p-3 pb-2">
         <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-white text-sm">
@@ -55,12 +51,6 @@ export const BranchNode: React.FC<BranchNodeProps> = ({ data, selected }) => {
                 type="source"
                 position={Position.Right}
                 id={branch.id} // 关键：使用分支 ID 作为 Handle ID
-                className="w-3! h-3! bg-blue-500! border-2! border-white! absolute!"
-                style={{
-                  top: "50%",
-                  right: "-18px",
-                  transform: "translateY(-50%)",
-                }}
               />
             </div>
           ))}
@@ -76,16 +66,10 @@ export const BranchNode: React.FC<BranchNodeProps> = ({ data, selected }) => {
             </div>
 
             {/* 默认分支的输出连接点 */}
-            <Handle
+            <CustomHandle
               type="source"
               position={Position.Right}
               id="else" // 固定 ID
-              className="w-3! h-3! bg-blue-500! border-2! border-white! absolute!"
-              style={{
-                top: "50%",
-                right: "-18px",
-                transform: "translateY(-50%)",
-              }}
             />
           </div>
         )}
