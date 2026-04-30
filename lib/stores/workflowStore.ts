@@ -137,7 +137,7 @@ export const useWorkflowStore = create<WorkflowState>()(
           edges: addEdge(
             {
               ...connection,
-              type: "smoothstep",
+              type: "default",
               animated: false,
             },
             state.edges

@@ -194,7 +194,7 @@ const CanvasContent: React.FC = () => {
         nodeDragThreshold={1}
         fitView
         fitViewOptions={{ padding: 0.2 }}
-        defaultEdgeOptions={{ type: "smoothstep", animated: false }}
+        defaultEdgeOptions={{ type: "default", animated: false }}
         // 使用 proOptions 禁用 attribution（可选）
         proOptions={{ hideAttribution: true }}
       >
