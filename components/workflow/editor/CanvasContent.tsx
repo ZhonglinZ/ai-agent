@@ -30,6 +30,7 @@ import {
 import { useStore } from "zustand";
 import { APINode } from "../nodes/APINode";
 import { BranchNode } from "../nodes/BranchNode";
+import { getValidPosition } from "@/lib/workflow/collisionAlgorithm";
 
 // 确保节点已注册
 initializeNodeRegistry();
@@ -59,11 +60,18 @@ const CanvasContent: React.FC = () => {
     placingNodeType,
     addNode,
     cancelPlacingNode,
+    enableCollision,
   } = useWorkflowStore();
 
   // 获取 ReactFlow 实例，用于坐标转换
   const reactFlowInstance = useReactFlow();
   const temporal = useWorkflowStore.temporal.getState();
+  // 记录最新坐标
+  const dragRef = React.useRef<{
+    id: string;
+    lastValidPosition: { x: number; y: number };
+  } | null>(null);
+
   // 初始化默认节点
   useEffect(() => {
     if (nodes.length > 0) return;
@@ -103,20 +111,100 @@ const CanvasContent: React.FC = () => {
     [onNodesChange],
   );
 
-  // 处理节点拖拽结束 - 同步最终位置到 store
-  const handleNodeDragStop = useCallback(
-    (_event: any, node: WorkflowNode) => {
-      // 拖拽结束时，更新该节点的最终位置
-      onNodesChange([
-        {
-          id: node.id,
-          type: "position",
-          position: node.position,
-        },
-      ]);
+  // 4. 实现拦截器：彻底屏蔽 React Flow 的默认位置更新
+  const onNodesChangeIntercepted = useCallback(
+    (changes: any) => {
+      // 如果关闭了防撞，就什么都不管，直接放行
+      if (!enableCollision) {
+        onNodesChange(changes);
+        return;
+      }
+
+      // 如果开启了防撞，过滤掉所有"位置变更"事件，防止 React Flow 自动移动节点
+      // 我们将在 handleNodeDrag 中手动控制移动
+      const filteredChanges = changes.filter((change: any) => {
+        if (
+          change.type === "position" &&
+          dragRef.current &&
+          change.id === dragRef.current.id
+        ) {
+          return false;
+        }
+        return true;
+      });
+      onNodesChange(filteredChanges);
     },
-    [onNodesChange],
+    [onNodesChange, enableCollision],
   );
+
+  // 5. 拖拽开始：记录初始合法状态
+  const handleNodeDragStart: NodeMouseHandler = useCallback((_event, node) => {
+    dragRef.current = {
+      id: node.id,
+      lastValidPosition: { ...node.position },
+    };
+  }, []);
+
+  // 6. 拖拽进行中：实时计算防撞
+  const handleNodeDrag: NodeMouseHandler = useCallback(
+    (_event, draggedNode) => {
+      // 如果关闭了防撞，直接退出
+      if (!enableCollision) return;
+
+      const otherNodes = nodes.filter((n) => n.id !== draggedNode.id);
+
+      // 关键：基准位置优先读取 Ref，因为 Ref 永远是"上一步的合法位置"
+      const baseNode =
+        dragRef.current && dragRef.current.id === draggedNode.id
+          ? { ...draggedNode, position: dragRef.current.lastValidPosition }
+          : draggedNode;
+
+      // 传入 dimensions 确保计算准确
+      const storeNode = nodes.find((n) => n.id === draggedNode.id);
+      const nodeWithDimensions = {
+        ...draggedNode,
+        measured: storeNode?.measured || draggedNode.measured,
+      };
+      const baseNodeWithDimensions = {
+        ...baseNode,
+        measured: storeNode?.measured || baseNode.measured,
+      };
+
+      // 执行算法
+      const validPosition = getValidPosition(
+        nodeWithDimensions,
+        baseNodeWithDimensions,
+        otherNodes,
+      );
+
+      // 如果位置合法（或已经修正），更新 Ref
+      if (dragRef.current && dragRef.current.id === draggedNode.id) {
+        dragRef.current.lastValidPosition = validPosition;
+      }
+
+      // 只有位置真正改变时才触发 React 渲染，优化性能
+      const currentNode = nodes.find((n) => n.id === draggedNode.id);
+      if (
+        currentNode &&
+        (validPosition.x !== currentNode.position.x ||
+          validPosition.y !== currentNode.position.y)
+      ) {
+        const newNodes = nodes.map((n) => {
+          if (n.id === draggedNode.id) {
+            return { ...n, position: validPosition };
+          }
+          return n;
+        });
+        setNodes(newNodes);
+      }
+    },
+    [nodes, setNodes, enableCollision],
+  );
+
+  // 7. 拖拽结束：清理现场
+  const handleNodeDragStop: NodeMouseHandler = useCallback(() => {
+    dragRef.current = null;
+  }, []);
 
   // 处理节点点击
   const handleNodeClick: NodeMouseHandler<WorkflowNode> = useCallback(
@@ -185,7 +273,9 @@ const CanvasContent: React.FC = () => {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        onNodesChange={handleNodesChange}
+        onNodesChange={onNodesChangeIntercepted} // 绑定拦截器
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

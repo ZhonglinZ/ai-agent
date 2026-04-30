@@ -62,6 +62,11 @@ interface WorkflowState {
   // ==================== 节点放置 Actions ====================
   startPlacingNode: (type: NodeType) => void;
   cancelPlacingNode: () => void;
+
+  // [新增] 是否开启防撞功能
+  enableCollision: boolean;
+  // [新增] 切换开关的方法
+  toggleCollision: () => void;
 }
 
 /**
@@ -75,6 +80,7 @@ const initialState = {
   edges: [] as WorkflowEdge[],
   selectedNodeId: null,
   placingNodeType: null as NodeType | null,
+  enableCollision: true,
 };
 
 /**
@@ -170,7 +176,10 @@ export const useWorkflowStore = create<WorkflowState>()(
         set((state) => ({
           nodes: state.nodes.map((node) =>
             node.id === nodeId
-              ? { ...node, data: { ...node.data, ...data } }
+              ? {
+                  ...node,
+                  data: { ...node.data, ...data } as WorkflowNodeData,
+                }
               : node
           ),
           isDirty: true,
@@ -196,12 +205,15 @@ export const useWorkflowStore = create<WorkflowState>()(
       startPlacingNode: (type) => set({ placingNodeType: type }),
 
       cancelPlacingNode: () => set({ placingNodeType: null }),
+
+      toggleCollision: () => set((state) => ({ enableCollision: !state.enableCollision })),
     }),
     {
       // 只追踪 nodes 和 edges 的变化（不追踪 UI 状态如 selectedNodeId）
       partialize: (state) => ({
         nodes: state.nodes,
         edges: state.edges,
+        enableCollision: state.enableCollision,
       }),
       // 在保存状态时，过滤掉节点的 width, height, measured 等属性
       onSave: (state) => ({

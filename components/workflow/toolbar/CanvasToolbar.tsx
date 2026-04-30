@@ -16,6 +16,8 @@ import {
   UndoOutlined,
   RedoOutlined,
   AimOutlined,
+  AppstoreFilled,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import { NodeSelector } from "./NodeSelector";
 import { useWorkflowStore } from "@/lib/stores/workflowStore";
@@ -23,6 +25,8 @@ import { Badge } from "antd";
 import { CheckSquareOutlined } from "@ant-design/icons";
 import { ValidationChecklist } from "./ValidationCheckList";
 import { validateWorkflowNodes } from "@/lib/workflow";
+import { getLayoutedElements } from "@/lib/workflow/layoutAlgorithm";
+import { PartitionOutlined } from "@ant-design/icons"; // 引入一个合适的图标
 
 /**
  * 画布工具栏
@@ -37,6 +41,9 @@ export const CanvasToolbar: React.FC = () => {
 
   // 获取撤销/重做相关方法
   const { undo, redo } = useWorkflowStore.temporal.getState();
+
+  const { setNodes, setEdges, enableCollision, toggleCollision } =
+    useWorkflowStore();
 
   // 验证清单是否打开
   const [validationChecklistOpen, setValidationChecklistOpen] = useState(false);
@@ -113,6 +120,22 @@ export const CanvasToolbar: React.FC = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
+
+  // 自动布局
+  const handleAutoLayout = useCallback(() => {
+    // 1. 调用算法计算新位置，强制使用 'LR' (Left-to-Right) 水平布局
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+      nodes,
+      edges,
+      "LR",
+    );
+    // 2. 更新 Store
+    setNodes(layoutedNodes);
+    setEdges(layoutedEdges);
+
+    // 3. 动画适应视图 (延迟一下等待渲染)
+    setTimeout(() => fitView({ duration: 800 }), 10);
+  }, [nodes, edges, setNodes, setEdges, fitView]);
 
   return (
     <div className="bg-white rounded-full shadow-lg border border-gray-200 px-2 py-1.5 flex items-center gap-1">
@@ -197,7 +220,31 @@ export const CanvasToolbar: React.FC = () => {
           />
         </Badge>
       </Tooltip>
+      <Tooltip title="自动布局">
+        <Button
+          type="text"
+          icon={<PartitionOutlined />}
+          className="text-gray-500 hover:text-gray-700"
+          onClick={handleAutoLayout}
+        />
+      </Tooltip>
 
+      <Tooltip title={enableCollision ? "关闭自动避让" : "开启自动避让"}>
+        <Button
+          type="text"
+          // 开启时显示实心蓝图标，关闭时显示空心灰图标
+          icon={
+            enableCollision ? (
+              <AppstoreFilled style={{ color: "#1677ff" }} />
+            ) : (
+              <AppstoreOutlined />
+            )
+          }
+          // 开启时增加浅蓝背景
+          className={enableCollision ? "bg-blue-50" : "text-gray-500"}
+          onClick={toggleCollision}
+        />
+      </Tooltip>
       <ValidationChecklist
         open={validationChecklistOpen}
         onClose={() => setValidationChecklistOpen(false)}
