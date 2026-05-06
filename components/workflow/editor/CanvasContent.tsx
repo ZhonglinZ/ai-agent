@@ -95,22 +95,6 @@ const CanvasContent: React.FC = () => {
     temporal.clear();
   }, [nodes.length, setNodes]);
 
-  const handleNodesChange = useCallback(
-    (changes: any) => {
-      // 过滤掉 dimensions 和 position 类型的变化
-      // dimensions: ReactFlow 内部自动调整的节点尺寸，不应该被记录
-      // position: 由 onNodeDragStop 统一处理
-      const importantChanges = changes.filter(
-        (change: any) => change.type !== "dimensions",
-      );
-
-      if (importantChanges.length > 0) {
-        onNodesChange(importantChanges);
-      }
-    },
-    [onNodesChange],
-  );
-
   // 4. 实现拦截器：彻底屏蔽 React Flow 的默认位置更新
   const onNodesChangeIntercepted = useCallback(
     (changes: any) => {

@@ -18,8 +18,14 @@ const WorkflowEditorPage = () => {
   const workflowId = searchParams.get("workflowId");
   // 从 Store 获取状态和方法
   // 注意：这里我们同时获取了 state 和 actions
-  const { workflow, isLoading, setWorkflow, setLoading, reset } =
-    useWorkflowStore();
+  const {
+    workflow,
+    isLoading,
+    setWorkflow,
+    setLoading,
+    reset,
+    loadWorkflowData,
+  } = useWorkflowStore();
   useEffect(() => {
     const fetchWorkflow = async () => {
       // 参数校验：如果没有 workflowId，直接报错并结束加载
@@ -37,6 +43,8 @@ const WorkflowEditorPage = () => {
         if (data != null) {
           // 数据存入 Store，所有子组件都可以访问
           setWorkflow(data);
+
+          await loadWorkflowData(workflowId);
         } else {
           message.error("工作流不存在");
           setWorkflow(null);
@@ -53,7 +61,7 @@ const WorkflowEditorPage = () => {
     return () => {
       reset();
     };
-  }, [workflowId, setWorkflow, setLoading, reset]);
+  }, [workflowId, setWorkflow, setLoading, reset, loadWorkflowData]);
   // 状态1：加载中
   if (isLoading) {
     return (

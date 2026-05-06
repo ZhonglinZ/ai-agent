@@ -16,6 +16,7 @@ import type {
 } from "@/lib/workflow/types";
 import { NodeType } from "@/lib/workflow/types";
 import { nodeRegistry } from "@/lib/workflow/nodeRegistry";
+import { workflowService } from "../services/workflow.service";
 /**
  * 工作流编辑器状态接口
  * 管理工作流的基本信息、画布节点和编辑状态
@@ -67,6 +68,12 @@ interface WorkflowState {
   enableCollision: boolean;
   // [新增] 切换开关的方法
   toggleCollision: () => void;
+
+  // ==================== 工作流 Actions ====================
+    /** 保存工作流到本地存储 */
+    saveWorkflow: () => Promise<boolean>;
+    /** 从本地存储加载工作流画布数据 */
+    loadWorkflowData: (workflowId: string) => Promise<boolean>;
 }
 
 /**
@@ -207,6 +214,51 @@ export const useWorkflowStore = create<WorkflowState>()(
       cancelPlacingNode: () => set({ placingNodeType: null }),
 
       toggleCollision: () => set((state) => ({ enableCollision: !state.enableCollision })),
+
+      // ==================== 工作流 Actions ====================
+      saveWorkflow: async () => {
+        const state = useWorkflowStore.getState();
+        const { workflow, nodes, edges } = state;
+        
+        if (!workflow?.id) {
+          console.error('无法保存：工作流 ID 不存在');
+          return false;
+        }
+
+        try {
+          await workflowService.saveWorkflow(
+            workflow.id,
+            workflow.name,
+            nodes,
+            edges
+          );
+          
+          set({ isDirty: false });
+          return true;
+        } catch (error) {
+          console.error('保存工作流失败:', error);
+          return false;
+        }
+      },
+
+      loadWorkflowData: async (workflowId: string) => {
+        try {
+          const data = await workflowService.getWorkflowData(workflowId);
+          
+          if (data && data.nodes && data.nodes.length > 0) {
+            set({
+              nodes: data.nodes,
+              edges: data.edges || [],
+            });
+            return true;
+          }
+          
+          return false;
+        } catch (error) {
+          console.error('加载工作流数据失败:', error);
+          return false;
+        }
+      },
     }),
     {
       // 只追踪 nodes 和 edges 的变化（不追踪 UI 状态如 selectedNodeId）
