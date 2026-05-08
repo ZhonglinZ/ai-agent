@@ -1,77 +1,121 @@
 /**
- * 工作流详情 API
- * GET /api/workflow/[id] - 获取工作流详情
+ * 单个工作流 API
+ * GET    /api/workflow/[id] — 完整画布数据（StoredWorkflowData）
+ * PATCH  /api/workflow/[id] — 更新基础字段
+ * PUT    /api/workflow/[id] — 保存完整画布数据
+ * DELETE /api/workflow/[id] — 删除
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { Workflow } from '@/lib/types/workflow';
+import type { UpdateWorkflowRequest } from '@/lib/types/workflow';
+import type { StoredWorkflowData } from '@/lib/services/workflowStorage.service';
+import { workflowDbService } from '@/lib/services/workflowDb.service';
 
-// 模拟数据库
-const mockWorkflows: Record<string, Workflow> = {
-  '1': {
-    id: '1',
-    name: '用户注册流程',
-    description: '新用户注册后的自动化处理流程',
-    steps: [],
-    runMode: 'once',
-    status: 'online',
-  },
-  '2': {
-    id: '2',
-    name: '订单处理流程',
-    description: '订单创建后的自动处理流程',
-    steps: [],
-    runMode: 'schedule',
-    status: 'offline',
-  },
-  '3': {
-    id: '3',
-    name: '数据同步流程',
-    description: '定时同步外部系统数据',
-    steps: [],
-    runMode: 'schedule',
-    status: 'online',
-  },
-};
-
-/**
- * GET /api/workflow/[id]
- * 获取指定 ID 的工作流详情
- */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Next.js 15+: params 是 Promise，需要 await
     const { id } = await params;
-    
-    console.log('[API Route] 收到请求，workflow ID:', id);
-    
-    // 查找工作流
-    const workflow = mockWorkflows[id];
-    
-    if (!workflow) {
+    const data = await workflowDbService.getWorkflowData(id);
+
+    if (!data) {
       return NextResponse.json(
-        {
-          success: false,
-          message: '工作流不存在',
-        },
+        { success: false, message: '工作流不存在' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: workflow,
-    });
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('获取工作流失败:', error);
     return NextResponse.json(
-      {
-        success: false,
-        message: '获取工作流失败',
-      },
+      { success: false, message: '获取工作流失败' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = (await request.json()) as UpdateWorkflowRequest;
+    const updated = await workflowDbService.updateWorkflow(id, body);
+
+    if (!updated) {
+      return NextResponse.json(
+        { success: false, message: '工作流不存在' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('更新工作流失败:', error);
+    return NextResponse.json(
+      { success: false, message: '更新工作流失败' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = (await request.json()) as StoredWorkflowData;
+
+    if (body.id !== id) {
+      return NextResponse.json(
+        { success: false, message: '请求体中的 id 与路径不一致' },
+        { status: 400 }
+      );
+    }
+
+    const existing = await workflowDbService.getWorkflowData(id);
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, message: '工作流不存在' },
+        { status: 404 }
+      );
+    }
+
+    await workflowDbService.saveWorkflowData(body);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('保存工作流失败:', error);
+    return NextResponse.json(
+      { success: false, message: '保存工作流失败' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const ok = await workflowDbService.deleteWorkflow(id);
+
+    if (!ok) {
+      return NextResponse.json(
+        { success: false, message: '工作流不存在' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('删除工作流失败:', error);
+    return NextResponse.json(
+      { success: false, message: '删除工作流失败' },
       { status: 500 }
     );
   }

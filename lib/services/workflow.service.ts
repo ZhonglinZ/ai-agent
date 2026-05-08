@@ -1,115 +1,123 @@
 /**
- * 工作流服务层
- * 负责所有工作流相关的 API 调用
- * 
- * 更新说明：
- * - 原先使用内存 Mock 数据
- * - 现在使用 localStorage 持久化存储
+ * 工作流服务层（浏览器端）
+ * 通过封装好的 http 客户端调用 `/api/workflow` Route Handlers
  */
 
+import { http } from './http';
 import type {
-    Workflow,
-    UpdateWorkflowRequest,
-    GetWorkflowsParams,
-  } from '@/lib/types/workflow';
-  import type { WorkflowNode, WorkflowEdge } from '@/lib/workflow/types';
-import { StoredWorkflowData, workflowStorageService } from './workflowStorage.service';
-  
-  /**
-   * 工作流服务类
-   */
-  export class WorkflowService {
-    /**
-     * 创建工作流（获取新的 workflowId）
-     */
-    async createWorkflow(): Promise<{ workflowId: string }> {
-      // 模拟网络延迟（保持与原接口一致的异步行为）
-      await new Promise(resolve => setTimeout(resolve, 100));
-      return workflowStorageService.createWorkflow();
+  Workflow,
+  UpdateWorkflowRequest,
+  GetWorkflowsParams,
+} from '@/lib/types/workflow';
+import type { WorkflowNode, WorkflowEdge } from '@/lib/workflow/types';
+import type { StoredWorkflowData } from './workflowStorage.service';
+
+export class WorkflowService {
+  private readonly baseUrl = '/workflow';
+
+  async createWorkflow(): Promise<{ workflowId: string }> {
+    const response = await http.post<{ workflowId: string }>(this.baseUrl);
+    return response.data;
+  }
+
+  async getWorkflowById(id: string): Promise<Workflow | null> {
+    const data = await this.getWorkflowData(id);
+    if (!data) {
+      return null;
     }
-  
-    /**
-     * 获取工作流详情
-     */
-    async getWorkflowById(id: string): Promise<Workflow | null> {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      return workflowStorageService.getWorkflowById(id);
-    }
-  
-    /**
-     * 获取工作流列表
-     */
-    async getWorkflows(params?: GetWorkflowsParams): Promise<Workflow[]> {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      return workflowStorageService.getWorkflowList();
-    }
-  
-    /**
-     * 更新工作流基础信息
-     */
-    async updateWorkflow(id: string, data: UpdateWorkflowRequest): Promise<Workflow | null> {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      return workflowStorageService.updateWorkflow(id, data);
-    }
-  
-    /**
-     * 删除工作流
-     */
-    async deleteWorkflow(id: string): Promise<boolean> {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      return workflowStorageService.deleteWorkflow(id);
-    }
-  
-    /**
-     * 获取工作流画布数据（节点和边）
-     */
-    async getWorkflowData(id: string): Promise<StoredWorkflowData | null> {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      return workflowStorageService.getWorkflowData(id);
-    }
-  
-    /**
-     * 保存工作流画布数据
-     */
-    async saveWorkflowData(data: StoredWorkflowData): Promise<void> {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      workflowStorageService.saveWorkflowData(data);
-    }
-  
-    /**
-     * 保存工作流（完整保存，包含节点和边）
-     * @param workflowId 工作流 ID
-     * @param name 工作流名称
-     * @param nodes 画布节点
-     * @param edges 画布边
-     */
-    async saveWorkflow(
-      workflowId: string,
-      name: string,
-      nodes: WorkflowNode[],
-      edges: WorkflowEdge[]
-    ): Promise<void> {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // 获取现有数据
-      const existingData = workflowStorageService.getWorkflowData(workflowId);
-      
-      // 合并并保存
-      const dataToSave: StoredWorkflowData = {
-        id: workflowId,
-        name,
-        description: existingData?.description || '',
-        runMode: existingData?.runMode || 'once',
-        status: existingData?.status || 'offline',
-        nodes,
-        edges,
-        createdAt: existingData?.createdAt || new Date().toISOString().replace('T', ' ').slice(0, 19),
-        updatedAt: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      };
-      
-      workflowStorageService.saveWorkflowData(dataToSave);
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      runMode: data.runMode,
+      status: data.status,
+      startPoint: '',
+      endPoint: '',
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    };
+  }
+
+  async getWorkflows(params?: GetWorkflowsParams): Promise<Workflow[]> {
+    try {
+      const response = await http.get<Workflow[]>(
+        this.baseUrl,
+        params as Record<string, unknown>,
+        { silent: true }
+      );
+      return response.data ?? [];
+    } catch {
+      return [];
     }
   }
-  
-  // 导出单例实例
-  export const workflowService = new WorkflowService();
+
+  async updateWorkflow(
+    id: string,
+    data: UpdateWorkflowRequest
+  ): Promise<Workflow | null> {
+    try {
+      const response = await http.patch<Workflow>(
+        `${this.baseUrl}/${encodeURIComponent(id)}`,
+        data,
+        { silent: true }
+      );
+      return response.data ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async deleteWorkflow(id: string): Promise<boolean> {
+    try {
+      await http.delete(`${this.baseUrl}/${encodeURIComponent(id)}`, {
+        silent: true,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async getWorkflowData(id: string): Promise<StoredWorkflowData | null> {
+    try {
+      const response = await http.get<StoredWorkflowData>(
+        `${this.baseUrl}/${encodeURIComponent(id)}`,
+        undefined,
+        { silent: true }
+      );
+      return response.data ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async saveWorkflowData(data: StoredWorkflowData): Promise<void> {
+    await http.put(`${this.baseUrl}/${encodeURIComponent(data.id)}`, data);
+  }
+
+  async saveWorkflow(
+    workflowId: string,
+    name: string,
+    nodes: WorkflowNode[],
+    edges: WorkflowEdge[]
+  ): Promise<void> {
+    const existingData = await this.getWorkflowData(workflowId);
+    const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+
+    const dataToSave: StoredWorkflowData = {
+      id: workflowId,
+      name,
+      description: existingData?.description ?? '',
+      runMode: existingData?.runMode ?? 'once',
+      status: existingData?.status ?? 'offline',
+      nodes,
+      edges,
+      createdAt: existingData?.createdAt ?? now,
+      updatedAt: now,
+    };
+
+    await this.saveWorkflowData(dataToSave);
+  }
+}
+
+export const workflowService = new WorkflowService();

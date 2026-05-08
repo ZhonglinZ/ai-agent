@@ -77,4 +77,6 @@ export interface RequestConfig {
   timeout?: number;
   retries?: number;
   data?: any;
+  /** 为 true 时不触发全局错误提示（仍会将错误抛出给调用方） */
+  silent?: boolean;
 }

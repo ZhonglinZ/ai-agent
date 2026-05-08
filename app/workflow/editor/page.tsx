@@ -75,7 +75,7 @@ const WorkflowEditorPage = () => {
       >
         <MainLayout>
           <div className="flex justify-center items-center h-screen">
-            <Spin size="large" fullscreen tip="加载中..." />
+            <Spin size="large" fullscreen description="加载中..." />
           </div>
         </MainLayout>
       </PageLayoutProvider>

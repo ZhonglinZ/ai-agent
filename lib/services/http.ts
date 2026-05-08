@@ -200,9 +200,10 @@ class HttpClient {
         details: error,
       };
 
-      // 应用错误拦截器
-      await this.applyErrorInterceptors(apiError);
-      
+      if (!config.silent) {
+        await this.applyErrorInterceptors(apiError);
+      }
+
       throw apiError;
     }
   }
