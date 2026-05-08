@@ -9,10 +9,12 @@ import {
   EditOutlined,
   CheckOutlined,
   CloseOutlined,
+  PlayCircleOutlined,
 } from "@ant-design/icons";
 import { useWorkflowStore } from "@/lib/stores/workflowStore";
 import { useOptimizedRouter } from "@/lib/hooks/useOptimizedRouter";
 import { workflowService } from "@/lib/services/workflow.service";
+import { useWorkflowRunStore } from "@/lib/stores/workflowRunStore";
 
 /**
  * 工作流编辑器顶部工具栏
@@ -215,6 +217,13 @@ export const EditorHeader: React.FC = () => {
 
       {/* 右侧：操作按钮 */}
       <Space>
+        <Button
+          icon={<PlayCircleOutlined />}
+          onClick={() => useWorkflowRunStore.getState().openPanel()}
+          className="bg-green-50 text-green-600 border-green-200"
+        >
+          运行
+        </Button>
         <Button
           icon={<SaveOutlined />}
           onClick={handleSave}

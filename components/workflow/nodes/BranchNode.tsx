@@ -47,7 +47,7 @@ export const BranchNode: React.FC<BranchNodeProps> = ({ data, selected }) => {
               </div>
 
               {/* 该分支的输出连接点 */}
-              <Handle
+              <CustomHandle
                 type="source"
                 position={Position.Right}
                 id={branch.id} // 关键：使用分支 ID 作为 Handle ID

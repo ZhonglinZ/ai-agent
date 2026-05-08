@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -22,7 +22,7 @@ import {
   CodeNode,
   LLMNode,
 } from "@/components/workflow/nodes";
-import { PropertyPanel } from "@/components/workflow/panels";
+import { PropertyPanel, RunPanel } from "@/components/workflow/panels";
 import {
   CanvasToolbar,
   PlacingNodePreview,
@@ -31,6 +31,10 @@ import { useStore } from "zustand";
 import { APINode } from "../nodes/APINode";
 import { BranchNode } from "../nodes/BranchNode";
 import { getValidPosition } from "@/lib/workflow/collisionAlgorithm";
+import {
+  selectRunningEdges,
+  useWorkflowRunStore,
+} from "@/lib/stores/workflowRunStore";
 
 // 确保节点已注册
 initializeNodeRegistry();
@@ -247,6 +251,17 @@ const CanvasContent: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [placingNodeType, cancelPlacingNode]);
 
+  const runningEdges = useWorkflowRunStore(selectRunningEdges);
+
+  // 为运行中的边添加动画样式
+  const styledEdges = useMemo(() => {
+    return edges.map((edge) => ({
+      ...edge,
+      className: runningEdges.includes(edge.id) ? "running" : "",
+      animated: runningEdges.includes(edge.id),
+    }));
+  }, [edges, runningEdges]);
+
   return (
     <div
       className={`relative w-full h-full ${
@@ -255,7 +270,7 @@ const CanvasContent: React.FC = () => {
     >
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={styledEdges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChangeIntercepted} // 绑定拦截器
         onNodeDragStart={handleNodeDragStart}
@@ -291,6 +306,7 @@ const CanvasContent: React.FC = () => {
         {/* 右侧属性面板 */}
         <Panel position="top-right" className="m-0 p-0">
           <PropertyPanel />
+          <RunPanel />
         </Panel>
 
         {/* 底部工具栏 */}
