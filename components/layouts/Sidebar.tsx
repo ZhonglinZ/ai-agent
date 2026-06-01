@@ -3,7 +3,13 @@
 import React, { useState } from "react";
 import { Layout, Menu } from "antd";
 import { usePathname, useRouter } from "next/navigation";
-import { DashboardOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  ApartmentOutlined,
+  BookOutlined,
+  DashboardOutlined,
+  RobotOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import type { MenuProps } from "antd";
 
 const { Sider } = Layout;
@@ -28,19 +34,20 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       label: "仪表盘",
     },
     {
-      key: "users-group", // 注意：这里用非路径的 key，避免和路由冲突
-      icon: <UserOutlined />,
-      label: "用户管理",
-      children: [
-        {
-          key: "/users/list",
-          label: "用户列表",
-        },
-        {
-          key: "/users/roles",
-          label: "角色管理",
-        },
-      ],
+      key: "/agent/list",
+      icon: <RobotOutlined />,
+      label: "智能体",
+    },
+    {
+      key: "/workflow/list",
+      icon: <ApartmentOutlined />,
+      label: "工作流",
+    },
+    // 新增：知识库菜单
+    {
+      key: "/knowledge/list",
+      icon: <BookOutlined />,
+      label: "知识库",
     },
   ];
 
@@ -75,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       <div className="h-16 flex items-center justify-center border-b border-gray-200">
         <div className="flex items-center space-x-3">
           {/* 应用图标 */}
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">A</span>
           </div>
           {/* 应用名称 - 只在展开时显示 */}
