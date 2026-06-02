@@ -29,7 +29,7 @@ export const ChapterTree: React.FC<ChapterTreeProps> = ({
     return [
       {
         key: "root",
-        title: "root",
+        title: "全部章节",
         children: chapters.map(mapChapterToNode),
       },
     ];

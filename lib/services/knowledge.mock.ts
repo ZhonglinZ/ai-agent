@@ -397,7 +397,7 @@ const MOCK_CHUNKS: DocumentChunk[] = [
     charCount: 78,
     index: 2,
     chapterId: "ch_1_1_2",
-    startIndex: 322,
+    startIndex: 229,
     endIndex: 400,
   },
   {
@@ -408,7 +408,7 @@ const MOCK_CHUNKS: DocumentChunk[] = [
     charCount: 156,
     index: 3,
     chapterId: "ch_1_2_1",
-    startIndex: 605,
+    startIndex: 401,
     endIndex: 761,
   },
   {
