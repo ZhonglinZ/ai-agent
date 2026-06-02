@@ -4,7 +4,15 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Button, Empty, Segmented, Space, Tag, Typography } from "antd";
+import {
+  Button,
+  Empty,
+  message,
+  Segmented,
+  Space,
+  Tag,
+  Typography,
+} from "antd";
 import { ArrowLeftOutlined, FileTextOutlined } from "@ant-design/icons";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { DocumentPreview } from "@/components/knowledge/DocumentPreview";
