@@ -115,12 +115,22 @@ export const AgentBaseInfoCard: React.FC<AgentBaseInfoCardProps> = ({
     const runGenerate = () => {
       const messageKey = "agent-ai-generate";
       setIsGenerating(true);
-      message.loading({ content: "AI 正在生成 Logo...", key: messageKey });
+      message.open({
+        type: "loading",
+        content: "AI 正在生成 Logo...",
+        duration: 2,
+        key: messageKey,
+      });
       generateTimerRef.current = setTimeout(() => {
         const nextLogo = generateLogoDataUrl(trimmedName);
         updateDraft({ logo: nextLogo });
         setIsGenerating(false);
-        message.success({ content: "已生成 Logo", key: messageKey });
+        message.open({
+          type: "success",
+          content: "已生成 Logo",
+          duration: 2,
+          key: messageKey,
+        });
       }, 800);
     };
 

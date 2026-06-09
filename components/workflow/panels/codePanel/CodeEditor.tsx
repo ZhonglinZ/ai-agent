@@ -19,7 +19,11 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code);
-    message.success("代码已复制到剪贴板");
+    message.open({
+      type: "success",
+      content: "代码已复制到剪贴板",
+      duration: 2,
+    });
   }, [code]);
 
   const handleOpenFullscreen = () => {

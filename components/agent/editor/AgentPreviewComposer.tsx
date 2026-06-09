@@ -28,7 +28,7 @@ export const AgentPreviewComposer: React.FC<AgentPreviewComposerProps> = ({
   return (
     <div className="mt-4 flex items-center gap-2 rounded-full border border-gray-200 px-3 py-2">
       <Input
-        bordered={false}
+        variant="borderless"
         placeholder="发送消息进行调试"
         className="flex-1"
         value={value}

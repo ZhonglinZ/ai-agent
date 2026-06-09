@@ -115,7 +115,11 @@ export const useAgentEditor = () => {
     }
 
     markSaved();
-    message.success("保存成功");
+    message.open({
+      type: "success",
+      content: "保存成功",
+      duration: 2,
+    });
     return true;
   }, [draft, getAgentById, addAgent, updateAgent, updateDraft, markSaved]);
 

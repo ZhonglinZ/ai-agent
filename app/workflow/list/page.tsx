@@ -64,7 +64,11 @@ const WorkflowList = () => {
       onOk: async () => {
         const success = await workflowService.deleteWorkflow(record.id);
         if (success) {
-          message.success("删除成功");
+          message.open({
+            type: "success",
+            content: "删除成功",
+            duration: 2,
+          });
           // 刷新列表
           fetchWorkflows();
         } else {

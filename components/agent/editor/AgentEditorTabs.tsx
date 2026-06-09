@@ -21,7 +21,7 @@ export const AgentEditorTabs: React.FC<AgentEditorTabsProps> = ({
       onChange={(key) => onChange(key as AgentEditorTabKey)}
       items={[
         { key: "config", label: "应用配置" },
-        { key: "tuning", label: "干预调优" },
+        // { key: "tuning", label: "干预调优" },
       ]}
       centered
       className={className}

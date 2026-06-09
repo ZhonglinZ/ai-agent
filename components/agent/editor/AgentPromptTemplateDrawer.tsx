@@ -26,8 +26,8 @@ export const AgentPromptTemplateDrawer: React.FC<
       title="选择角色指令模板"
       open={open}
       onClose={onClose}
-      width={420}
-      destroyOnClose
+      size={420}
+      destroyOnHidden
       styles={{ body: { padding: 16 } }}
     >
       <div className="flex h-full flex-col">

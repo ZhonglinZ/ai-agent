@@ -91,7 +91,11 @@ export const EditorHeader: React.FC = () => {
     try {
       const success = await saveWorkflow();
       if (success) {
-        message.success("保存成功");
+        message.open({
+          type: "success",
+          content: "保存成功",
+          duration: 2,
+        });
       } else {
         message.error("保存失败");
       }
@@ -122,7 +126,11 @@ export const EditorHeader: React.FC = () => {
       setSaving(false);
 
       if (!saveSuccess) {
-        message.error("保存失败，无法发布");
+        message.open({
+          type: "error",
+          content: "保存失败，无法发布",
+          duration: 2,
+        });
         return;
       }
     }
@@ -136,12 +144,20 @@ export const EditorHeader: React.FC = () => {
       if (result) {
         // 同步更新 Store 中的状态
         updateWorkflow({ status: "online" });
-        message.success("发布成功");
+        message.open({
+          type: "success",
+          content: "发布成功",
+          duration: 2,
+        });
       } else {
         message.error("发布失败");
       }
     } catch (error) {
-      message.error("发布失败");
+      message.open({
+        type: "error",
+        content: "发布失败",
+        duration: 2,
+      });
       console.error("发布失败:", error);
     } finally {
       setPublishing(false);

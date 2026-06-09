@@ -95,10 +95,18 @@ export default function KnowledgeListPage() {
   const handleDelete = (id: string) => {
     const success = knowledgeService.deleteKnowledgeBase(id);
     if (success) {
-      message.success("删除成功");
+      message.open({
+        type: "success",
+        content: "删除成功",
+        duration: 2,
+      });
       loadData();
     } else {
-      message.error("删除失败");
+      message.open({
+        type: "error",
+        content: "删除失败",
+        duration: 2,
+      });
     }
   };
 

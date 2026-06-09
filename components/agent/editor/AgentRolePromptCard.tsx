@@ -77,12 +77,22 @@ export const AgentRolePromptCard: React.FC<AgentRolePromptCardProps> = ({
     const nextPrompt = buildOptimizedPrompt(draft);
     const messageKey = "agent-role-optimize";
     setIsOptimizing(true);
-    message.loading({ content: "正在优化角色指令...", key: messageKey });
+    message.open({
+      type: "loading",
+      content: "正在优化角色指令...",
+      duration: 2,
+      key: messageKey,
+    });
     optimizeTimerRef.current = setTimeout(() => {
       setOptimizedPrompt(nextPrompt);
       setIsOptimizeOpen(true);
       setIsOptimizing(false);
-      message.success({ content: "已生成优化版本", key: messageKey });
+      message.open({
+        type: "success",
+        content: "已生成优化版本",
+        duration: 2,
+        key: messageKey,
+      });
     }, 700);
   };
 
@@ -98,7 +108,11 @@ export const AgentRolePromptCard: React.FC<AgentRolePromptCardProps> = ({
     if (!selected) return;
     updateDraft({ rolePrompt: selected.content });
     setIsTemplateOpen(false);
-    message.success("已应用模板");
+    message.open({
+      type: "success",
+      content: "已应用模板",
+      duration: 2,
+    });
   };
 
   return (

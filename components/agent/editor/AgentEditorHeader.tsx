@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Dropdown, Tag, Tooltip, message } from "antd";
+import { Button, Dropdown, Space, Tag, Tooltip, message } from "antd";
 import type { MenuProps } from "antd";
 import {
   ArrowLeftOutlined,
@@ -79,7 +79,11 @@ export const AgentEditorHeader: React.FC<AgentEditorHeaderProps> = ({
     try {
       const result = publishAgent();
       if (result.success) {
-        message.success("发布成功！");
+        message.open({
+          type: "success",
+          content: "发布成功！",
+          duration: 2,
+        });
         setPublishModalOpen(false);
       }
     } finally {
@@ -149,15 +153,18 @@ export const AgentEditorHeader: React.FC<AgentEditorHeaderProps> = ({
             />
           </div>
           <div className="flex items-center gap-4 justify-end">
-            <Dropdown.Button
-              type="primary"
-              icon={<DownOutlined />}
-              menu={{ items: dropdownItems }}
-              onClick={handleOpenPublishModal}
-            >
-              <SendOutlined />
-              发布
-            </Dropdown.Button>
+            <Space.Compact>
+              <Button
+                type="primary"
+                icon={<SendOutlined />}
+                onClick={handleOpenPublishModal}
+              >
+                发布
+              </Button>
+              <Dropdown menu={{ items: dropdownItems }} placement="bottomRight">
+                <Button type="primary" icon={<DownOutlined />} />
+              </Dropdown>
+            </Space.Compact>
             <div className="hidden md:flex items-center gap-2 text-xs text-gray-500">
               <span
                 className={`inline-flex h-2 w-2 rounded-full ${statusDotClassName}`}

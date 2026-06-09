@@ -90,7 +90,7 @@ export const AgentAbilitySelectModal: React.FC<
       cancelText="取消"
       title={title}
       width={720}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="space-y-4">
         <p className="text-sm text-gray-500">{description}</p>

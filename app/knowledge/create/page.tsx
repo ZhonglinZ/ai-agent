@@ -173,7 +173,11 @@ export default function CreateKnowledgePage() {
         }
       }
 
-      message.success("创建成功");
+      message.open({
+        type: "success",
+        content: "创建成功",
+        duration: 2,
+      });
       router.push(`/knowledge/${created.id}`);
     } catch (error) {
       message.error("创建失败");
