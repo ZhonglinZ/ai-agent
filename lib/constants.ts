@@ -105,10 +105,10 @@ export const USER_STATUS = {
 } as const;
 
 export const USER_ROLES = {
-  SUPER_ADMIN: 'super_admin',   // 超级管理员
-  ADMIN: 'admin',               // 管理员
-  USER: 'user',                 // 普通用户
-  GUEST: 'guest',               // 访客
+  SUPER_ADMIN: "super_admin", // 超级管理员
+  ADMIN: "admin", // 管理员
+  USER: "user", // 普通用户
+  GUEST: "guest", // 访客
 } as const;
 
 export const ORDER_STATUS = {
@@ -172,6 +172,9 @@ export const STORAGE_KEYS = {
   LANGUAGE: "language",
   SIDEBAR_COLLAPSED: "sidebar_collapsed",
   TABLE_SETTINGS: "table_settings",
+  AGENT_DRAFT: "agent_draft", // 新增
+  AGENT_UI: "agent_ui", // 新增
+  AGENT_LIST: "agent_list", // 新增：智能体列表
 } as const;
 
 // 主题常量
@@ -262,32 +265,32 @@ export const CURRENCIES = {
 // 路由路径常量
 export const ROUTES = {
   // 基础路由
-  HOME: '/',
-  LOGIN: '/login',
-  REGISTER: '/register',
-  NOT_FOUND: '/404',
-  FORBIDDEN: '/403',
+  HOME: "/",
+  LOGIN: "/login",
+  REGISTER: "/register",
+  NOT_FOUND: "/404",
+  FORBIDDEN: "/403",
 
   // 业务路由
-  DASHBOARD: '/dashboard',
+  DASHBOARD: "/dashboard",
 
   // 用户管理
-  USERS: '/users',
-  USER_LIST: '/users/list',
-  USER_DETAIL: '/users/detail',
-  USER_ROLES: '/users/roles',
+  USERS: "/users",
+  USER_LIST: "/users/list",
+  USER_DETAIL: "/users/detail",
+  USER_ROLES: "/users/roles",
 
   // 系统设置
-  SETTINGS: '/settings',
-  PROFILE: '/profile',
+  SETTINGS: "/settings",
+  PROFILE: "/profile",
 } as const;
 
 // 消息类型
 export const MESSAGE_TYPES = {
-  SUCCESS: 'success',
-  ERROR: 'error',
-  WARNING: 'warning',
-  INFO: 'info',
+  SUCCESS: "success",
+  ERROR: "error",
+  WARNING: "warning",
+  INFO: "info",
 } as const;
 
 // 表单验证规则
