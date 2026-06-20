@@ -16,7 +16,8 @@ interface AgentPreviewMessageListProps {
 const getBubbleClasses = (role: AgentPreviewMessage["role"]) =>
   role === "user" ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-700";
 
-const getAlignClasses = () => "justify-start";
+const getAlignClasses = (role: AgentPreviewMessage["role"]) =>
+  role === "user" ? "justify-end" : "justify-start";
 
 const getBubbleSizeClasses = (role: AgentPreviewMessage["role"]) =>
   role === "assistant" ? "w-full max-w-full" : "max-w-[70%]";
@@ -73,7 +74,10 @@ export const AgentPreviewMessageList: React.FC<
           (message.status === "streaming" ? "思考中..." : "暂无思考内容");
 
         return (
-          <div key={message.id} className={cn("flex", getAlignClasses())}>
+          <div
+            key={message.id}
+            className={cn("flex", getAlignClasses(message.role))}
+          >
             <div
               className={cn(
                 "space-y-2 rounded-xl px-3 py-2 text-sm",

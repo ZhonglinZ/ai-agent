@@ -117,7 +117,7 @@ export const AgentBaseInfoCard: React.FC<AgentBaseInfoCardProps> = ({
       setIsGenerating(true);
       message.open({
         type: "loading",
-        content: "AI 正在生成 Logo...",
+        content: "正在生成 Logo...",
         duration: 2,
         key: messageKey,
       });
@@ -173,7 +173,7 @@ export const AgentBaseInfoCard: React.FC<AgentBaseInfoCardProps> = ({
             loading={isGenerating}
             onClick={handleGenerate}
           >
-            AI 生成 Logo
+            生成 Logo
           </Button>
         </div>
 

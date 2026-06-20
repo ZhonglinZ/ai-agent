@@ -2,7 +2,7 @@
 export const DEFAULT_OPENING_STATEMENT =
   "你好，我是你的合同审查助手，有什么可以帮你？";
 
-export const MAX_SUGGESTED_QUESTIONS = 3;
+export const MAX_SUGGESTED_QUESTIONS = 5;
 
 export const DEFAULT_SUGGESTED_QUESTIONS = [
   "这份合同的违约条款是否严谨？",

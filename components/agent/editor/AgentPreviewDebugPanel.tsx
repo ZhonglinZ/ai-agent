@@ -53,9 +53,9 @@ export const AgentPreviewDebugPanel: React.FC<AgentPreviewDebugPanelProps> = ({
               暂无调试数据
             </div>
           ) : (
-            events.map((event) => (
+            events.map((event, index) => (
               <div
-                key={event.id}
+                key={`debug-event-${index}-${event.id}`}
                 className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
               >
                 <div className="flex items-center gap-2">
