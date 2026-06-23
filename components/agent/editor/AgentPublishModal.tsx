@@ -61,7 +61,7 @@ export const AgentPublishModal: React.FC<AgentPublishModalProps> = ({
           <Alert
             type="warning"
             showIcon
-            message={
+            title={
               <ul className="list-disc list-inside m-0 p-0">
                 {errors.map((error, index) => (
                   <li key={index} className="text-sm">
@@ -78,7 +78,7 @@ export const AgentPublishModal: React.FC<AgentPublishModalProps> = ({
           <Alert
             type="info"
             showIcon
-            message="发布后仍可继续编辑和更新智能体配置"
+            title="发布后仍可继续编辑和更新智能体配置"
           />
         </div>
       )}

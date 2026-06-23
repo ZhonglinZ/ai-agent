@@ -5,6 +5,7 @@ import { Button } from "antd";
 import type { AgentPreviewMessage } from "@/lib/types/agent";
 import { cn } from "@/lib/utils";
 import { AgentPreviewMessageContent } from "./AgentPreviewMessageContent";
+import { AgentPreviewThoughtBlock } from "./AgentPreviewThoughtBlock";
 
 interface AgentPreviewMessageListProps {
   messages: AgentPreviewMessage[];
@@ -21,32 +22,6 @@ const getAlignClasses = (role: AgentPreviewMessage["role"]) =>
 
 const getBubbleSizeClasses = (role: AgentPreviewMessage["role"]) =>
   role === "assistant" ? "w-full max-w-full" : "max-w-[70%]";
-
-const getThoughtStatusLabel = (status?: AgentPreviewMessage["status"]) => {
-  switch (status) {
-    case "streaming":
-      return "思考中";
-    case "stopped":
-      return "思考已终止";
-    case "error":
-      return "思考异常";
-    default:
-      return "思考完成";
-  }
-};
-
-const getThoughtStatusDotClass = (status?: AgentPreviewMessage["status"]) => {
-  switch (status) {
-    case "streaming":
-      return "bg-blue-500";
-    case "stopped":
-      return "bg-orange-500";
-    case "error":
-      return "bg-red-500";
-    default:
-      return "bg-emerald-500";
-  }
-};
 
 export const AgentPreviewMessageList: React.FC<
   AgentPreviewMessageListProps
@@ -66,12 +41,13 @@ export const AgentPreviewMessageList: React.FC<
   return (
     <div className="space-y-2">
       {messages.map((message) => {
+        const isThoughtPhase =
+          message.role === "assistant" &&
+          message.status === "streaming" &&
+          !message.content.trim();
         const shouldShowThought =
           message.role === "assistant" &&
-          (Boolean(message.thoughts) || Boolean(message.status));
-        const thoughtContent =
-          message.thoughts?.trim() ||
-          (message.status === "streaming" ? "思考中..." : "暂无思考内容");
+          (Boolean(message.thoughts?.trim()) || isThoughtPhase);
 
         return (
           <div
@@ -86,20 +62,11 @@ export const AgentPreviewMessageList: React.FC<
               )}
             >
               {shouldShowThought ? (
-                <div className="rounded-lg border border-gray-200 bg-white/70 px-2 py-2 text-xs text-gray-600">
-                  <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                    <span
-                      className={cn(
-                        "inline-flex h-2 w-2 rounded-full",
-                        getThoughtStatusDotClass(message.status),
-                      )}
-                    />
-                    <span>{getThoughtStatusLabel(message.status)}</span>
-                  </div>
-                  <div className="mt-1 whitespace-pre-wrap">
-                    {thoughtContent}
-                  </div>
-                </div>
+                <AgentPreviewThoughtBlock
+                  thoughts={message.thoughts}
+                  status={message.status}
+                  isThoughtPhase={isThoughtPhase}
+                />
               ) : null}
 
               {message.role === "assistant" ? (
