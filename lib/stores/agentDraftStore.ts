@@ -15,7 +15,6 @@ interface AgentDraftState {
   lastSavedAt: string | null;
 
   // 原有方法
-  setDraft: (draft: AgentDraft, options?: { markSaved?: boolean }) => void;
   updateDraft: (updates: Partial<AgentDraft>) => void;
   markSaved: (timestamp?: string) => void;
   setDirty: (dirty: boolean) => void;
@@ -55,17 +54,6 @@ const useAgentDraftStoreBase = create<AgentDraftState>()(
         draft: createEmptyDraft(),
         isDirty: false,
         lastSavedAt: null,
-
-        setDraft: (draft, options) => {
-          const markSaved = options?.markSaved ?? true;
-          set({
-            draft,
-            isDirty: !markSaved,
-            lastSavedAt: markSaved
-              ? (draft.updatedAt ?? createTimestamp())
-              : null,
-          });
-        },
 
         updateDraft: (updates) => {
           const timestamp = createTimestamp();

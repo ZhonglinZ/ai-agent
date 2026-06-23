@@ -94,7 +94,13 @@ export const useAgentEditor = () => {
   const saveDraft = useCallback(() => {
     const validation = validateDraftForSave(draft);
     if (!validation.valid) {
-      validation.errors.forEach((error) => message.error(error));
+      validation.errors.forEach((error) =>
+        message.open({
+          type: "error",
+          content: error,
+          duration: 2,
+        }),
+      );
       return false;
     }
 
