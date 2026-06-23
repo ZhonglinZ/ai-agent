@@ -1,7 +1,12 @@
-import { message } from 'antd';
-import { API_BASE_URL, STORAGE_KEYS, ERROR_MESSAGES } from '@/lib/constants';
-import { storageUtils } from '@/lib/utils';
-import { type ApiResponse, type RequestConfig, type ApiError, HttpMethod } from '@/lib/types/api';
+import { message } from "antd";
+import { API_BASE_URL, STORAGE_KEYS, ERROR_MESSAGES } from "@/lib/constants";
+import { storageUtils } from "@/lib/utils";
+import {
+  type ApiResponse,
+  type RequestConfig,
+  type ApiError,
+  HttpMethod,
+} from "@/lib/types/api";
 
 // HTTP 状态码
 const HTTP_STATUS = {
@@ -16,7 +21,9 @@ const HTTP_STATUS = {
 } as const;
 
 // 请求拦截器类型
-type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
+type RequestInterceptor = (
+  config: RequestConfig,
+) => RequestConfig | Promise<RequestConfig>;
 type ResponseInterceptor = (response: any) => any;
 type ErrorInterceptor = (error: any) => any;
 
@@ -51,7 +58,7 @@ class HttpClient {
     this.addResponseInterceptor((response) => {
       // 如果是 Response 对象，先转换为 JSON
       if (response instanceof Response) {
-        return response.json().then(data => {
+        return response.json().then((data) => {
           if (!response.ok) {
             throw new Error(data.message || ERROR_MESSAGES.SERVER_ERROR);
           }
@@ -68,12 +75,15 @@ class HttpClient {
         storageUtils.remove(STORAGE_KEYS.TOKEN);
         storageUtils.remove(STORAGE_KEYS.REFRESH_TOKEN);
         storageUtils.remove(STORAGE_KEYS.USER_INFO);
-        
+
         // 如果不是在登录页面，则跳转到登录页
-        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-          window.location.href = '/login';
+        if (
+          typeof window !== "undefined" &&
+          !window.location.pathname.includes("/login")
+        ) {
+          window.location.href = "/login";
         }
-        
+
         message.error(ERROR_MESSAGES.UNAUTHORIZED);
       } else if (error.status === HTTP_STATUS.FORBIDDEN) {
         message.error(ERROR_MESSAGES.FORBIDDEN);
@@ -84,7 +94,7 @@ class HttpClient {
       } else {
         message.error(error.message || ERROR_MESSAGES.UNKNOWN_ERROR);
       }
-      
+
       throw error;
     });
   }
@@ -105,7 +115,9 @@ class HttpClient {
   }
 
   // 应用请求拦截器
-  private async applyRequestInterceptors(config: RequestConfig): Promise<RequestConfig> {
+  private async applyRequestInterceptors(
+    config: RequestConfig,
+  ): Promise<RequestConfig> {
     let finalConfig = config;
     for (const interceptor of this.requestInterceptors) {
       finalConfig = await interceptor(finalConfig);
@@ -137,47 +149,48 @@ class HttpClient {
 
   // 构建完整 URL
   private buildURL(url: string, params?: Record<string, any>): string {
-    const fullURL = url.startsWith('http') ? url : `${this.baseURL}${url}`;
-    
+    const fullURL = url.startsWith("http") ? url : `${this.baseURL}${url}`;
+
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
+        if (value !== null && value !== undefined && value !== "") {
           searchParams.append(key, String(value));
         }
       });
       const queryString = searchParams.toString();
       return queryString ? `${fullURL}?${queryString}` : fullURL;
     }
-    
+
     return fullURL;
   }
 
   // 通用请求方法
-  private async request<T = any>(config: RequestConfig): Promise<ApiResponse<T>> {
+  private async request<T = any>(
+    config: RequestConfig,
+  ): Promise<ApiResponse<T>> {
     try {
       // 应用请求拦截器
       const finalConfig = await this.applyRequestInterceptors(config);
-      
-      // 构建请求选项
+
+      const method = finalConfig.method || "GET";
+
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
         ...finalConfig.headers,
       };
 
       const fetchOptions: RequestInit = {
-        method: finalConfig.method || 'GET',
+        method,
         headers,
         signal: AbortSignal.timeout(finalConfig.timeout || this.timeout),
       };
 
-      // 添加请求体
-      if (finalConfig.data && ['POST', 'PUT', 'PATCH'].includes(fetchOptions.method!)) {
+      // 有 body 时才设置 Content-Type，避免空 POST 触发服务端 JSON 解析错误
+      if (finalConfig.data && ["POST", "PUT", "PATCH"].includes(method)) {
         if (finalConfig.data instanceof FormData) {
-          // FormData 不需要设置 Content-Type
-          delete headers['Content-Type'];
           fetchOptions.body = finalConfig.data;
         } else {
+          headers["Content-Type"] = "application/json";
           fetchOptions.body = JSON.stringify(finalConfig.data);
         }
       }
@@ -187,15 +200,15 @@ class HttpClient {
 
       // 发送请求
       const response = await fetch(url, fetchOptions);
-      
+
       // 应用响应拦截器
       const data = await this.applyResponseInterceptors(response);
-      
+
       return data;
     } catch (error: any) {
       // 构建错误对象
       const apiError: ApiError = {
-        code: error.code || 'UNKNOWN_ERROR',
+        code: error.code || "UNKNOWN_ERROR",
         message: error.message || ERROR_MESSAGES.UNKNOWN_ERROR,
         details: error,
       };
@@ -209,7 +222,11 @@ class HttpClient {
   }
 
   // GET 请求
-  async get<T = any>(url: string, params?: Record<string, any>, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
+  async get<T = any>(
+    url: string,
+    params?: Record<string, any>,
+    config?: Partial<RequestConfig>,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
       method: HttpMethod.GET,
@@ -219,17 +236,25 @@ class HttpClient {
   }
 
   // POST 请求
-  async post<T = any>(url: string, data?: any, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
+  async post<T = any>(
+    url: string,
+    data?: any,
+    config?: Partial<RequestConfig>,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
-      method: HttpMethod.POST ,
+      method: HttpMethod.POST,
       data,
       ...config,
     });
   }
 
   // PUT 请求
-  async put<T = any>(url: string, data?: any, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
+  async put<T = any>(
+    url: string,
+    data?: any,
+    config?: Partial<RequestConfig>,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
       method: HttpMethod.PUT,
@@ -239,7 +264,11 @@ class HttpClient {
   }
 
   // PATCH 请求
-  async patch<T = any>(url: string, data?: any, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
+  async patch<T = any>(
+    url: string,
+    data?: any,
+    config?: Partial<RequestConfig>,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
       method: HttpMethod.PATCH,
@@ -249,7 +278,10 @@ class HttpClient {
   }
 
   // DELETE 请求
-  async delete<T = any>(url: string, config?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
+  async delete<T = any>(
+    url: string,
+    config?: Partial<RequestConfig>,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({
       url,
       method: HttpMethod.DELETE,
@@ -258,16 +290,20 @@ class HttpClient {
   }
 
   // 上传文件
-  async upload<T = any>(url: string, file: File, onProgress?: (progress: number) => void): Promise<ApiResponse<T>> {
+  async upload<T = any>(
+    url: string,
+    file: File,
+    onProgress?: (progress: number) => void,
+  ): Promise<ApiResponse<T>> {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       const xhr = new XMLHttpRequest();
 
       // 监听上传进度
       if (onProgress) {
-        xhr.upload.addEventListener('progress', (event) => {
+        xhr.upload.addEventListener("progress", (event) => {
           if (event.lengthComputable) {
             const progress = Math.round((event.loaded / event.total) * 100);
             onProgress(progress);
@@ -276,13 +312,13 @@ class HttpClient {
       }
 
       // 监听请求完成
-      xhr.addEventListener('load', () => {
+      xhr.addEventListener("load", () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const response = JSON.parse(xhr.responseText);
             resolve(response);
           } catch (error) {
-            reject(new Error('Invalid JSON response'));
+            reject(new Error("Invalid JSON response"));
           }
         } else {
           reject(new Error(`Upload failed with status ${xhr.status}`));
@@ -290,18 +326,18 @@ class HttpClient {
       });
 
       // 监听请求错误
-      xhr.addEventListener('error', () => {
-        reject(new Error('Upload failed'));
+      xhr.addEventListener("error", () => {
+        reject(new Error("Upload failed"));
       });
 
       // 添加认证头
       const token = storageUtils.get(STORAGE_KEYS.TOKEN);
       if (token) {
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
       }
 
       // 发送请求
-      xhr.open('POST', this.buildURL(url));
+      xhr.open("POST", this.buildURL(url));
       xhr.send(formData);
     });
   }
@@ -316,22 +352,22 @@ class HttpClient {
       });
 
       if (!response.ok) {
-        throw new Error('Download failed');
+        throw new Error("Download failed");
       }
 
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
+
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = filename || 'download';
+      link.download = filename || "download";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      message.error('文件下载失败');
+      message.error("文件下载失败");
       throw error;
     }
   }

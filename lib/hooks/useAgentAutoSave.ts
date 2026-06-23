@@ -5,10 +5,12 @@ import { useAgentDraftStore } from "@/lib/stores/agentDraftStore";
 
 const DEFAULT_AUTO_SAVE_DELAY = 1200;
 
-export const useAgentAutoSave = (delay = DEFAULT_AUTO_SAVE_DELAY) => {
+export const useAgentAutoSave = (
+  saveDraft: () => Promise<boolean>,
+  delay = DEFAULT_AUTO_SAVE_DELAY,
+) => {
   const isDirty = useAgentDraftStore.use.useIsDirty();
   const updatedAt = useAgentDraftStore.use.useDraft().updatedAt;
-  const markSaved = useAgentDraftStore.use.useMarkSaved();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export const useAgentAutoSave = (delay = DEFAULT_AUTO_SAVE_DELAY) => {
     }
 
     timerRef.current = setTimeout(() => {
-      markSaved();
+      void saveDraft();
     }, delay);
 
     return () => {
@@ -34,5 +36,5 @@ export const useAgentAutoSave = (delay = DEFAULT_AUTO_SAVE_DELAY) => {
         timerRef.current = null;
       }
     };
-  }, [delay, isDirty, markSaved, updatedAt]);
+  }, [delay, isDirty, saveDraft, updatedAt]);
 };

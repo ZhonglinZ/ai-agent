@@ -38,3 +38,28 @@ model StoredWorkflow {
 
   @@map("stored_workflows")
 }
+
+/// Mirrors `Agent` in lib/types/agent.ts
+enum AgentStatus {
+  draft
+  published
+  offline
+}
+
+model Agent {
+  id           String      @id
+  name         String
+  description  String      @default("")
+  logo         String      @default("A")
+  status       AgentStatus @default(draft)
+  modelId      String
+  rolePrompt   String      @default("")
+  /// `AgentAbilities` serialized as JSON
+  abilities    Json
+  /// `AgentConversationConfig` serialized as JSON
+  conversation Json
+  createdAt    DateTime
+  updatedAt    DateTime
+
+  @@map("agents")
+}

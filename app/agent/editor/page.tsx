@@ -11,9 +11,8 @@ import { useAgentUIStore } from "@/lib/stores/agentUIStore";
 import { useAgentEditor } from "@/lib/hooks/useAgentEditor";
 
 const AgentEditorPage = () => {
-  // 调用 Hook 触发初始化逻辑（加载数据或创建新草稿）
   const { saveDraft, publishAgent, validateForPublish } = useAgentEditor();
-  useAgentAutoSave();
+  useAgentAutoSave(saveDraft);
   const activeTab = useAgentUIStore.use.useActiveTab();
 
   useEffect(() => {

@@ -1,16 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { message } from "antd";
 import { useAgentDraftStore } from "@/lib/stores/agentDraftStore";
-import { useAgentListStore } from "@/lib/stores/agentListStore";
+import { agentService } from "@/lib/services/agent.service";
 import { draftToAgent } from "@/lib/types/agent";
 import type { AgentDraft } from "@/lib/types/agent";
 
-/**
- * 校验草稿是否可以发布
- */
 const validateDraftForPublish = (
   draft: AgentDraft,
 ): { valid: boolean; errors: string[] } => {
@@ -34,9 +31,6 @@ const validateDraftForPublish = (
   };
 };
 
-/**
- * 校验草稿是否可以保存（比发布宽松）
- */
 const validateDraftForSave = (
   draft: AgentDraft,
 ): { valid: boolean; errors: string[] } => {
@@ -63,35 +57,33 @@ export const useAgentEditor = () => {
   const updateDraft = useAgentDraftStore.use.useUpdateDraft();
   const markSaved = useAgentDraftStore.use.useMarkSaved();
 
-  const getAgentById = useAgentListStore.use.useGetAgentById();
-  const addAgent = useAgentListStore.use.useAddAgent();
-  const updateAgent = useAgentListStore.use.useUpdateAgent();
-
-  const initializedRef = useRef(false);
-
-  // 初始化：根据 URL 参数加载数据
   useEffect(() => {
-    // 防止重复初始化
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    let cancelled = false;
 
-    if (agentId) {
-      // 编辑模式：加载已有智能体
-      const agent = getAgentById(agentId);
-      if (agent) {
-        loadFromAgent(agent);
+    const init = async () => {
+      if (agentId) {
+        const agent = await agentService.getAgentById(agentId);
+        if (cancelled) return;
+
+        if (agent) {
+          loadFromAgent(agent);
+        } else {
+          message.error("智能体不存在");
+          createNewDraft();
+        }
       } else {
-        message.error("智能体不存在");
         createNewDraft();
       }
-    } else {
-      // 新建模式：创建空白草稿
-      createNewDraft();
-    }
-  }, [agentId, getAgentById, loadFromAgent, createNewDraft]);
+    };
 
-  // 保存草稿
-  const saveDraft = useCallback(() => {
+    void init();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [agentId, loadFromAgent, createNewDraft]);
+
+  const saveDraft = useCallback(async (): Promise<boolean> => {
     const validation = validateDraftForSave(draft);
     if (!validation.valid) {
       validation.errors.forEach((error) =>
@@ -105,57 +97,66 @@ export const useAgentEditor = () => {
     }
 
     const isNew = draft.id === null;
-    const agent = draftToAgent(
-      draft,
-      isNew ? undefined : getAgentById(draft.id!),
-    );
 
-    if (isNew) {
-      // 新建：添加到列表
-      addAgent(agent);
-      // 更新草稿的 ID
-      updateDraft({ id: agent.id });
-    } else {
-      // 编辑：更新列表中的数据
-      updateAgent(agent.id, agent);
+    try {
+      if (isNew) {
+        const agent = draftToAgent(draft);
+        const created = await agentService.createAgentRecord(agent);
+        updateDraft({ id: created.id });
+      } else {
+        const existing = await agentService.getAgentById(draft.id!);
+        const agent = draftToAgent(draft, existing ?? undefined);
+        await agentService.saveAgent(agent);
+      }
+
+      markSaved();
+      message.open({
+        type: "success",
+        content: "保存成功",
+        duration: 2,
+      });
+      return true;
+    } catch (error) {
+      console.error("保存智能体失败:", error);
+      message.error("保存失败");
+      return false;
     }
+  }, [draft, updateDraft, markSaved]);
 
-    markSaved();
-    message.open({
-      type: "success",
-      content: "保存成功",
-      duration: 2,
-    });
-    return true;
-  }, [draft, getAgentById, addAgent, updateAgent, updateDraft, markSaved]);
-
-  // 发布智能体
-  const publishAgent = useCallback(() => {
+  const publishAgent = useCallback(async (): Promise<{
+    success: boolean;
+    errors: string[];
+  }> => {
     const validation = validateDraftForPublish(draft);
     if (!validation.valid) {
       return { success: false, errors: validation.errors };
     }
 
     const isNew = draft.id === null;
-    const existingAgent = isNew ? undefined : getAgentById(draft.id!);
-    const agent = draftToAgent(
-      { ...draft, status: "published" },
-      existingAgent,
-    );
 
-    if (isNew) {
-      addAgent(agent);
-      updateDraft({ id: agent.id, status: "published" });
-    } else {
-      updateAgent(agent.id, agent);
-      updateDraft({ status: "published" });
+    try {
+      if (isNew) {
+        const agent = draftToAgent({ ...draft, status: "published" });
+        const created = await agentService.createAgentRecord(agent);
+        updateDraft({ id: created.id, status: "published" });
+      } else {
+        const existing = await agentService.getAgentById(draft.id!);
+        const agent = draftToAgent(
+          { ...draft, status: "published" },
+          existing ?? undefined,
+        );
+        await agentService.saveAgent(agent);
+        updateDraft({ status: "published" });
+      }
+
+      markSaved();
+      return { success: true, errors: [] };
+    } catch (error) {
+      console.error("发布智能体失败:", error);
+      return { success: false, errors: ["发布失败"] };
     }
+  }, [draft, updateDraft, markSaved]);
 
-    markSaved();
-    return { success: true, errors: [] };
-  }, [draft, getAgentById, addAgent, updateAgent, updateDraft, markSaved]);
-
-  // 校验发布
   const validateForPublish = useCallback(() => {
     return validateDraftForPublish(draft);
   }, [draft]);

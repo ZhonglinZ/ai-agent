@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Button,
   Input,
@@ -16,7 +15,8 @@ import type { ColumnsType } from "antd/es/table";
 import { PlusOutlined } from "@ant-design/icons";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { PageHeader } from "@/components/common/PageHeader";
-import { useAgentListStore } from "@/lib/stores/agentListStore";
+import { useOptimizedRouter } from "@/lib/hooks/useOptimizedRouter";
+import { agentService } from "@/lib/services/agent.service";
 import type { Agent, AgentStatus } from "@/lib/types/agent";
 
 const { Text } = Typography;
@@ -45,24 +45,29 @@ const formatDate = (dateStr: string): string => {
 };
 
 const AgentList = () => {
-  const router = useRouter();
+  const router = useOptimizedRouter();
   const [searchKeyword, setSearchKeyword] = useState("");
-
-  // 从 Store 获取数据和方法
-  const agents = useAgentListStore.use.useAgents();
-  const deleteAgent = useAgentListStore.use.useDeleteAgent();
-  const initializeWithMockData =
-    useAgentListStore.use.useInitializeWithMockData();
-  const isInitialized = useAgentListStore.use.useIsInitialized();
-
-  // 确保初始化
-  useEffect(() => {
-    if (!isInitialized && agents.length === 0) {
-      initializeWithMockData();
-    }
-  }, [isInitialized, agents.length, initializeWithMockData]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const breadcrumbs = [{ title: "智能体管理" }, { title: "智能体列表" }];
+
+  const fetchAgents = async () => {
+    setLoading(true);
+    try {
+      const data = await agentService.getAgents();
+      setAgents(data);
+    } catch (error) {
+      message.error("获取智能体列表失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchAgents();
+  }, []);
 
   const filteredAgents = useMemo(() => {
     if (!searchKeyword.trim()) return agents;
@@ -73,13 +78,26 @@ const AgentList = () => {
     });
   }, [agents, searchKeyword]);
 
-  const handleDelete = (id: string) => {
-    deleteAgent(id);
-    message.success("已删除智能体");
+  const handleDelete = async (id: string) => {
+    const success = await agentService.deleteAgent(id);
+    if (success) {
+      message.success("已删除智能体");
+      void fetchAgents();
+    } else {
+      message.error("删除失败");
+    }
   };
 
-  const handleCreate = () => {
-    router.push("/agent/editor");
+  const handleCreate = async () => {
+    try {
+      setCreating(true);
+      const { agentId } = await agentService.createAgent();
+      router.push(`/agent/editor?id=${agentId}`);
+    } catch (error) {
+      message.error("创建智能体失败");
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleEdit = (id: string) => {
@@ -95,9 +113,9 @@ const AgentList = () => {
       render: (name: string, record: Agent) => (
         <div className="flex flex-col">
           <span className="text-gray-900 font-medium">{name}</span>
-          <Text type="secondary" className="text-xs">
+          {/* <Text type="secondary" className="text-xs">
             ID: {record.id}
-          </Text>
+          </Text> */}
         </div>
       ),
     },
@@ -144,7 +162,7 @@ const AgentList = () => {
             title="确认删除该智能体吗？"
             okText="删除"
             cancelText="取消"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => void handleDelete(record.id)}
           >
             <Button type="link" danger>
               删除
@@ -171,12 +189,18 @@ const AgentList = () => {
             onChange={(event) => setSearchKeyword(event.target.value)}
             className="max-w-xs"
           />
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            loading={creating}
+            onClick={() => void handleCreate()}
+          >
             创建智能体
           </Button>
         </div>
         <Table
           rowKey="id"
+          loading={loading}
           columns={columns}
           dataSource={filteredAgents}
           pagination={{ pageSize: 8 }}

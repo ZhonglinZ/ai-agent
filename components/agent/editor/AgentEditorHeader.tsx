@@ -31,8 +31,8 @@ const STATUS_COLOR_MAP: Record<AgentStatus, string> = {
   offline: "default",
 };
 type AgentEditorHeaderProps = {
-  saveDraft: () => void;
-  publishAgent: () => { success: boolean; errors: string[] };
+  saveDraft: () => Promise<boolean>;
+  publishAgent: () => Promise<{ success: boolean; errors: string[] }>;
   validateForPublish: () => { errors: string[] };
 };
 
@@ -77,7 +77,7 @@ export const AgentEditorHeader: React.FC<AgentEditorHeaderProps> = ({
   const handleConfirmPublish = async () => {
     setIsPublishing(true);
     try {
-      const result = publishAgent();
+      const result = await publishAgent();
       if (result.success) {
         message.open({
           type: "success",
@@ -93,7 +93,7 @@ export const AgentEditorHeader: React.FC<AgentEditorHeaderProps> = ({
 
   // 保存草稿
   const handleSaveDraft = () => {
-    saveDraft();
+    void saveDraft();
   };
 
   // 下拉菜单项
