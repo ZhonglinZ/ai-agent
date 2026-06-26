@@ -94,7 +94,7 @@ export const useAgentPreviewSession = () => {
       startStreaming();
       closeEventSource();
 
-      const url = `${SSE_ENDPOINT}?message=${encodeURIComponent(nextContent)}`;
+      const url = `${SSE_ENDPOINT}?rolePrompt=${encodeURIComponent(nextContent)}`;
       const eventSource = new EventSource(url);
       eventSourceRef.current = eventSource;
 
