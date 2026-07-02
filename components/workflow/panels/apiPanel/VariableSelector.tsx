@@ -6,9 +6,25 @@ import {
   PlusOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import { Input, Modal } from "antd";
+import { Input, Modal, type InputRef } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { useRef, useState, useEffect, useMemo } from "react";
+
+const DEFAULT_PLACEHOLDER = "点击 {x} 插入变量";
+
+function VariableInsertButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="font-mono text-xs text-blue-500 hover:text-blue-600 px-0.5"
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      title="插入变量"
+    >
+      {"{x}"}
+    </button>
+  );
+}
 
 /**
  * 变量选择器组件
@@ -152,36 +168,42 @@ export const VariableInput: React.FC<VariableInputProps> = ({
   className,
 }) => {
   const [showSelector, setShowSelector] = useState(false);
-  // 使用包装 div 的 ref 来获取位置，因为 Ant Design Input 的 ref 不是 DOM 元素
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<InputRef>(null);
   const cursorPosRef = useRef<number>(0);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "/") {
-      // e.preventDefault(); // 阻止 '/' 字符输入到搜索框
-      cursorPosRef.current = e.currentTarget.selectionStart || 0;
-      setShowSelector(true);
+  const syncCursorPos = () => {
+    const input = inputRef.current?.input;
+    if (input) {
+      cursorPosRef.current = input.selectionStart ?? value.length;
     }
+  };
+
+  const handleOpenSelector = () => {
+    syncCursorPos();
+    setShowSelector(true);
   };
 
   const handleSelectVariable = (varName: string) => {
     const before = value.slice(0, cursorPosRef.current);
     const after = value.slice(cursorPosRef.current);
-    // 移除触发的 '/' 字符（如果有的话）
-    const newBefore = before.endsWith("/") ? before.slice(0, -1) : before;
-    onChange(`${newBefore}{{${varName}}}${after}`);
+    onChange(`${before}{{${varName}}}${after}`);
     setShowSelector(false);
   };
 
   return (
     <div className="relative" ref={wrapperRef}>
       <Input
+        ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder || "键入 '/' 键快速插入变量..."}
+        onSelect={syncCursorPos}
+        onClick={syncCursorPos}
+        onKeyUp={syncCursorPos}
+        placeholder={placeholder ?? DEFAULT_PLACEHOLDER}
         className={className}
         size="small"
+        suffix={<VariableInsertButton onClick={handleOpenSelector} />}
       />
       <VariableSelector
         visible={showSelector}
@@ -297,7 +319,14 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
   const [tempValue, setTempValue] = useState(value);
   const [showSelector, setShowSelector] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const cursorPosRef = useRef<number>(0);
+
+  const syncCursorPos = () => {
+    if (textareaRef.current) {
+      cursorPosRef.current = textareaRef.current.selectionStart ?? value.length;
+    }
+  };
 
   const handleOpenFullscreen = () => {
     setTempValue(value);
@@ -309,29 +338,29 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
     setIsFullscreen(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "/") {
-      e.preventDefault(); // 阻止 '/' 字符输入到搜索框
-      cursorPosRef.current = e.currentTarget.selectionStart || 0;
-      setShowSelector(true);
-    }
+  const handleOpenSelector = () => {
+    syncCursorPos();
+    setShowSelector(true);
   };
 
   const handleSelectVariable = (varName: string) => {
     const before = value.slice(0, cursorPosRef.current);
     const after = value.slice(cursorPosRef.current);
-    // 移除触发的 '/' 字符（如果有的话）
-    const newBefore = before.endsWith("/") ? before.slice(0, -1) : before;
-    onChange(`${newBefore}{{${varName}}}${after}`);
+    onChange(`${before}{{${varName}}}${after}`);
     setShowSelector(false);
   };
 
   const editorContent = (
     <div className="relative">
       <TextArea
+        ref={(node) => {
+          textareaRef.current = node?.resizableTextArea?.textArea ?? null;
+        }}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
+        onSelect={syncCursorPos}
+        onClick={syncCursorPos}
+        onKeyUp={syncCursorPos}
         placeholder='{\n  "key": "value"\n}'
         rows={isFullscreen ? 20 : 6}
         className="font-mono text-sm"
@@ -352,6 +381,15 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
       <div className="relative" ref={wrapperRef}>
         {editorContent}
         <button
+          type="button"
+          onClick={handleOpenSelector}
+          className="absolute top-2 right-8 font-mono text-xs text-blue-500 hover:text-blue-600"
+          title="插入变量"
+        >
+          {"{x}"}
+        </button>
+        <button
+          type="button"
           onClick={handleOpenFullscreen}
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
         >
@@ -376,7 +414,7 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
           className="font-mono text-sm"
         />
         <div className="mt-2 text-xs text-gray-400">
-          提示：输入 / 可以插入变量，格式为 {"{{variableName}}"}
+          提示：点击 {"{x}"} 可以插入变量，格式为 {"{{variableName}}"}
         </div>
       </Modal>
     </>

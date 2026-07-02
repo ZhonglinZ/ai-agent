@@ -1,7 +1,9 @@
-import { useState, useRef } from "react";
-import { Input } from "antd";
+import { useRef, useState } from "react";
+import { Input, type InputRef } from "antd";
 import { WorkflowVariable } from "@/lib/workflow/variableUtils";
 import { VariableSelector } from "./VariableSelector";
+
+const DEFAULT_PLACEHOLDER = "点击 {x} 插入变量";
 
 /**
  * 带变量选择功能的输入框
@@ -19,17 +21,23 @@ export const VariableInput: React.FC<VariableInputProps> = ({
   onChange,
   placeholder,
   variables,
+  className,
 }) => {
   const [showSelector, setShowSelector] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<InputRef>(null);
   const cursorPosRef = useRef<number>(0);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "/") {
-      e.preventDefault(); // 阻止 '/' 输入
-      cursorPosRef.current = e.currentTarget.selectionStart || 0;
-      setShowSelector(true);
+  const syncCursorPos = () => {
+    const input = inputRef.current?.input;
+    if (input) {
+      cursorPosRef.current = input.selectionStart ?? value.length;
     }
+  };
+
+  const handleOpenSelector = () => {
+    syncCursorPos();
+    setShowSelector(true);
   };
 
   const handleSelectVariable = (varName: string) => {
@@ -42,10 +50,25 @@ export const VariableInput: React.FC<VariableInputProps> = ({
   return (
     <div className="relative" ref={wrapperRef}>
       <Input
+        ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        onSelect={syncCursorPos}
+        onClick={syncCursorPos}
+        onKeyUp={syncCursorPos}
+        placeholder={placeholder ?? DEFAULT_PLACEHOLDER}
+        className={className}
+        suffix={
+          <button
+            type="button"
+            className="font-mono text-xs text-blue-500 hover:text-blue-600 px-0.5"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={handleOpenSelector}
+            title="插入变量"
+          >
+            {"{x}"}
+          </button>
+        }
       />
       <VariableSelector
         visible={showSelector}
