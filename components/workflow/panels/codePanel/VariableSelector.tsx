@@ -55,7 +55,7 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
     return variables.filter(
       (v) =>
         v.name.toLowerCase().includes(search.toLowerCase()) ||
-        v.sourceNodeLabel.toLowerCase().includes(search.toLowerCase())
+        v.sourceNodeLabel.toLowerCase().includes(search.toLowerCase()),
     );
   }, [variables, search]);
 
@@ -91,7 +91,9 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
               <div
                 key={variable.id}
                 className="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
-                onClick={() => onSelect(variable.name)}
+                onClick={() =>
+                  onSelect(`${variable.sourceNodeLabel}.${variable.name}`)
+                }
               >
                 <div className="flex flex-col">
                   <span className="text-gray-800 font-medium text-sm">

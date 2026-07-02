@@ -26,7 +26,7 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
   const filteredVariables = useMemo(() => {
     if (!searchText) return variables;
     return variables.filter((v) =>
-      v.name.toLowerCase().includes(searchText.toLowerCase())
+      v.name.toLowerCase().includes(searchText.toLowerCase()),
     );
   }, [variables, searchText]);
 
@@ -80,7 +80,7 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
                 key={variable.id}
                 className="flex items-center justify-between p-2 rounded hover:bg-blue-50 cursor-pointer"
                 onClick={() => {
-                  onSelect(variable.name);
+                  onSelect(`${variable.sourceNodeLabel}.${variable.name}`);
                   onClose();
                   setSearchText("");
                 }}
