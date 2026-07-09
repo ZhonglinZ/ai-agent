@@ -102,7 +102,7 @@ export const RunPanel: React.FC = () => {
   const startRun = useWorkflowRunStore((state) => state.startRun);
   const stopRun = useWorkflowRunStore((state) => state.stopRun);
   const isPanelOpen = useWorkflowRunStore((state) => state.isPanelOpen);
-
+  const togglePanel = useWorkflowRunStore((state) => state.togglePanel);
   // 自动滚动到最新日志
   useEffect(() => {
     if (logsEndRef.current) {
@@ -220,7 +220,15 @@ export const RunPanel: React.FC = () => {
     <div className="w-96 bg-white rounded-lg shadow-lg">
       {/* 头部 */}
       <div className="px-4 py-3 border-b">
-        <h3>运行面板</h3>
+        <div className="flex items-center justify-between">
+          <h3>运行面板</h3>
+          <button
+            className="text-gray-400 hover:text-gray-600 text-lg"
+            onClick={() => togglePanel()}
+          >
+            ×
+          </button>
+        </div>
         {getWorkflowStatusTag(status)}
         {duration > 0 && <span>耗时: {formatDuration(duration)}</span>}
       </div>
