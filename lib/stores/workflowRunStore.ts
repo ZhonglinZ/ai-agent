@@ -1,6 +1,6 @@
 /**
  * 工作流运行状态管理 Store
- * 
+ *
  * 用于管理工作流执行过程中的状态，包括：
  * - 运行状态（空闲、运行中、成功、失败、已停止）
  * - 各节点执行状态
@@ -8,17 +8,20 @@
  * - 运行结果
  */
 
-import { create } from 'zustand';
-import type { Edge } from '@xyflow/react';
-import type { WorkflowNode } from '@/lib/workflow/types';
+import { create } from "zustand";
+import type { Edge } from "@xyflow/react";
+import type { WorkflowNode } from "@/lib/workflow/types";
 import {
   NodeExecutionStatus,
   WorkflowRunStatus,
   type NodeExecutionResult,
   type WorkflowRunResult,
-} from '@/lib/workflow/engine/types';
-import { workflowEngine } from '@/lib/workflow/engine/workflowEngine';
-import { validateWorkflowForRun, type ValidationResult } from '@/lib/workflow/validator';
+} from "@/lib/workflow/engine/types";
+import { workflowEngine } from "@/lib/workflow/engine/workflowEngine";
+import {
+  validateWorkflowForRun,
+  type ValidationResult,
+} from "@/lib/workflow/validator";
 
 /**
  * 日志条目
@@ -28,7 +31,7 @@ export interface LogEntry {
   nodeId: string;
   message: string;
   timestamp: number;
-  type: 'info' | 'success' | 'error' | 'warning';
+  type: "info" | "success" | "error" | "warning";
 }
 
 /**
@@ -37,37 +40,40 @@ export interface LogEntry {
 export interface WorkflowRunState {
   // 运行状态
   status: WorkflowRunStatus;
-  
+
   // 当前运行 ID
   runId: string | null;
-  
+
   // 节点执行状态映射
   nodeStatuses: Record<string, NodeExecutionStatus>;
-  
+
   // 节点执行结果
   nodeResults: NodeExecutionResult[];
-  
+
   // 执行日志
   logs: LogEntry[];
-  
+
   // 最终输出
   finalOutput: Record<string, unknown> | null;
-  
+
   // 运行时间
   startTime: number | null;
   endTime: number | null;
-  
+
   // 运行面板是否显示
   isPanelOpen: boolean;
-  
+
   // 输入变量（用于开始节点的参数）
   inputVariables: Record<string, unknown>;
-  
+
   // 验证结果（用于显示验证错误）
   validationResult: ValidationResult | null;
-  
+
   // 当前正在执行的边（用于边动画）
   runningEdges: string[];
+
+  // 预览面板是否显示
+  isPreviewPanelOpen: boolean;
 }
 
 /**
@@ -75,35 +81,42 @@ export interface WorkflowRunState {
  */
 export interface WorkflowRunActions {
   // 开始运行工作流（返回验证结果或执行结果）
-  startRun: (nodes: WorkflowNode[], edges: Edge[]) => Promise<WorkflowRunResult | null>;
-  
+  startRun: (
+    nodes: WorkflowNode[],
+    edges: Edge[],
+  ) => Promise<WorkflowRunResult | null>;
+
   // 停止运行
   stopRun: () => void;
-  
+
   // 重置运行状态
   resetRun: () => void;
-  
+
   // 设置输入变量
   setInputVariables: (variables: Record<string, unknown>) => void;
-  
+
   // 更新单个输入变量
   updateInputVariable: (key: string, value: unknown) => void;
-  
+
   // 打开/关闭运行面板
   togglePanel: () => void;
   openPanel: () => void;
   closePanel: () => void;
-  
+
   // 内部使用：更新状态
   setWorkflowStatus: (status: WorkflowRunStatus) => void;
   setNodeStatus: (nodeId: string, status: NodeExecutionStatus) => void;
   addLog: (nodeId: string, message: string) => void;
   clearLogs: () => void;
-  
+
   // 设置正在运行的边
   setRunningEdges: (edgeIds: string[]) => void;
   addRunningEdge: (edgeId: string) => void;
   clearRunningEdges: () => void;
+
+  // 打开/关闭预览面板
+  openPreviewPanel: () => void;
+  closePreviewPanel: () => void;
 }
 
 export type WorkflowRunStore = WorkflowRunState & WorkflowRunActions;
@@ -124,6 +137,7 @@ const initialState: WorkflowRunState = {
   inputVariables: {},
   validationResult: null,
   runningEdges: [],
+  isPreviewPanelOpen: false,
 };
 
 /**
@@ -155,14 +169,14 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
         startTime: Date.now(),
         endTime: Date.now(),
       });
-      
+
       // 添加验证错误日志
-      addLog('system', '❌ 工作流验证失败：');
-      validationResult.issues.forEach(issue => {
-        const nodeInfo = issue.nodeLabel ? `[${issue.nodeLabel}] ` : '';
-        addLog('system', `  • ${nodeInfo}${issue.message}`);
+      addLog("system", "❌ 工作流验证失败：");
+      validationResult.issues.forEach((issue) => {
+        const nodeInfo = issue.nodeLabel ? `[${issue.nodeLabel}] ` : "";
+        addLog("system", `  • ${nodeInfo}${issue.message}`);
       });
-      
+
       return null;
     }
 
@@ -183,7 +197,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
 
     // 初始化所有节点为待执行状态
     const initialNodeStatuses: Record<string, NodeExecutionStatus> = {};
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       initialNodeStatuses[node.id] = NodeExecutionStatus.PENDING;
     });
     set({ nodeStatuses: initialNodeStatuses });
@@ -200,27 +214,37 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
           }
         },
         onNodeStatusChange: (nodeId: string, status: NodeExecutionStatus) => {
-          set(state => ({
+          set((state) => ({
             nodeStatuses: {
               ...state.nodeStatuses,
               [nodeId]: status,
             },
           }));
-          
+
           // 当节点开始执行时，更新运行中的边
           if (status === NodeExecutionStatus.RUNNING) {
             // 找到所有指向该节点的边，标记为运行中
-            const incomingEdges = edges.filter(e => e.target === nodeId);
-            set(state => ({
-              runningEdges: [...new Set([...state.runningEdges, ...incomingEdges.map(e => e.id)])],
+            const incomingEdges = edges.filter((e) => e.target === nodeId);
+            set((state) => ({
+              runningEdges: [
+                ...new Set([
+                  ...state.runningEdges,
+                  ...incomingEdges.map((e) => e.id),
+                ]),
+              ],
             }));
           }
-          
+
           // 当节点完成时，找到从该节点出发的边，标记为运行中
           if (status === NodeExecutionStatus.SUCCESS) {
-            const outgoingEdges = edges.filter(e => e.source === nodeId);
-            set(state => ({
-              runningEdges: [...new Set([...state.runningEdges, ...outgoingEdges.map(e => e.id)])],
+            const outgoingEdges = edges.filter((e) => e.source === nodeId);
+            set((state) => ({
+              runningEdges: [
+                ...new Set([
+                  ...state.runningEdges,
+                  ...outgoingEdges.map((e) => e.id),
+                ]),
+              ],
             }));
           }
         },
@@ -273,7 +297,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
 
   // 更新单个输入变量
   updateInputVariable: (key, value) => {
-    set(state => ({
+    set((state) => ({
       inputVariables: {
         ...state.inputVariables,
         [key]: value,
@@ -283,7 +307,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
 
   // 打开/关闭运行面板
   togglePanel: () => {
-    set(state => ({ isPanelOpen: !state.isPanelOpen }));
+    set((state) => ({ isPanelOpen: !state.isPanelOpen }));
   },
 
   openPanel: () => {
@@ -301,7 +325,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
 
   // 设置节点状态
   setNodeStatus: (nodeId, status) => {
-    set(state => ({
+    set((state) => ({
       nodeStatuses: {
         ...state.nodeStatuses,
         [nodeId]: status,
@@ -316,16 +340,17 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
       nodeId,
       message,
       timestamp: Date.now(),
-      type: message.includes('❌') || message.includes('错误') 
-        ? 'error'
-        : message.includes('✅') || message.includes('完成')
-        ? 'success'
-        : message.includes('⚠️')
-        ? 'warning'
-        : 'info',
+      type:
+        message.includes("❌") || message.includes("错误")
+          ? "error"
+          : message.includes("✅") || message.includes("完成")
+            ? "success"
+            : message.includes("⚠️")
+              ? "warning"
+              : "info",
     };
 
-    set(state => ({
+    set((state) => ({
       logs: [...state.logs, logEntry],
     }));
   },
@@ -334,22 +359,31 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
   clearLogs: () => {
     set({ logs: [] });
   },
-  
+
   // 设置运行中的边
   setRunningEdges: (edgeIds) => {
     set({ runningEdges: edgeIds });
   },
-  
+
   // 添加运行中的边
   addRunningEdge: (edgeId) => {
-    set(state => ({
+    set((state) => ({
       runningEdges: [...new Set([...state.runningEdges, edgeId])],
     }));
   },
-  
+
   // 清除运行中的边
   clearRunningEdges: () => {
     set({ runningEdges: [] });
+  },
+
+  // 打开/关闭预览面板
+  openPreviewPanel: () => {
+    set({ isPreviewPanelOpen: true });
+  },
+
+  closePreviewPanel: () => {
+    set({ isPreviewPanelOpen: false });
   },
 }));
 
@@ -363,13 +397,13 @@ export const selectRunStatus = (state: WorkflowRunStore) => state.status;
 /**
  * 选择是否正在运行
  */
-export const selectIsRunning = (state: WorkflowRunStore) => 
+export const selectIsRunning = (state: WorkflowRunStore) =>
   state.status === WorkflowRunStatus.RUNNING;
 
 /**
  * 选择节点状态
  */
-export const selectNodeStatus = (nodeId: string) => (state: WorkflowRunStore) => 
+export const selectNodeStatus = (nodeId: string) => (state: WorkflowRunStore) =>
   state.nodeStatuses[nodeId] || NodeExecutionStatus.PENDING;
 
 /**
@@ -385,12 +419,14 @@ export const selectIsPanelOpen = (state: WorkflowRunStore) => state.isPanelOpen;
 /**
  * 选择运行中的边
  */
-export const selectRunningEdges = (state: WorkflowRunStore) => state.runningEdges;
+export const selectRunningEdges = (state: WorkflowRunStore) =>
+  state.runningEdges;
 
 /**
  * 选择验证结果
  */
-export const selectValidationResult = (state: WorkflowRunStore) => state.validationResult;
+export const selectValidationResult = (state: WorkflowRunStore) =>
+  state.validationResult;
 
 /**
  * 计算运行时长（注意：此选择器不应直接用于渲染，会导致无限循环）

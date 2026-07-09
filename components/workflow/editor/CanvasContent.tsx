@@ -22,7 +22,11 @@ import {
   CodeNode,
   LLMNode,
 } from "@/components/workflow/nodes";
-import { PropertyPanel, RunPanel } from "@/components/workflow/panels";
+import {
+  PreviewPanel,
+  PropertyPanel,
+  RunPanel,
+} from "@/components/workflow/panels";
 import {
   CanvasToolbar,
   PlacingNodePreview,
@@ -307,6 +311,10 @@ const CanvasContent: React.FC = () => {
         <Panel position="top-right" className="m-0 p-0">
           <PropertyPanel />
           <RunPanel />
+        </Panel>
+
+        <Panel position="top-right" className="m-0 p-0">
+          <PreviewPanel />
         </Panel>
 
         {/* 底部工具栏 */}

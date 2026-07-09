@@ -3,3 +3,4 @@ export { DynamicForm } from "./DynamicForm";
 export { LLMPropertyPanel } from "./llmPanel";
 export { CodePropertyPanel } from "./codePanel";
 export { RunPanel } from "./RunPanel";
+export { PreviewPanel } from "./PreviewPanel";

@@ -10,6 +10,7 @@ import {
   CheckOutlined,
   CloseOutlined,
   PlayCircleOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import { useWorkflowStore } from "@/lib/stores/workflowStore";
 import { useOptimizedRouter } from "@/lib/hooks/useOptimizedRouter";
@@ -233,6 +234,13 @@ export const EditorHeader: React.FC = () => {
 
       {/* 右侧：操作按钮 */}
       <Space>
+        {/* <Button
+          icon={<EyeOutlined />}
+          onClick={() => useWorkflowRunStore.getState().openPreviewPanel()}
+          className="bg-red-50 text-red-600 border-red-200"
+        >
+          预览
+        </Button> */}
         <Button
           icon={<PlayCircleOutlined />}
           onClick={() => useWorkflowRunStore.getState().openPanel()}

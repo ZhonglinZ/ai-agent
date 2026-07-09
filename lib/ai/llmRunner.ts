@@ -12,7 +12,9 @@ export type RunLLMOptions = {
 
 export async function runLLM(options: RunLLMOptions) {
   const { prompt, system, model, temperature, topP } = options;
-  console.log("runLLM", prompt);
+  const modelId = model?.trim() || DEFAULT_MODEL;
+
+  // 通义 compatible-mode 走 Chat Completions，不要用默认的 responses
   const result = await generateText({
     model: qwen(DEFAULT_MODEL),
     system: system || undefined,
@@ -20,7 +22,7 @@ export async function runLLM(options: RunLLMOptions) {
     temperature,
     topP,
   });
-  console.log("result", result.text, result.usage);
+
   return {
     text: result.text,
     usage: result.usage,
