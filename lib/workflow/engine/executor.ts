@@ -215,10 +215,7 @@ export const llmNodeExecutor: NodeExecutor = {
         res.outputs,
         context.variables,
       );
-      context.onLog?.(
-        node.id,
-        `✅ 模型响应: ${String(outputs.text ?? "").slice(0, 100)}...`,
-      );
+      context.onLog?.(node.id, `✅ 模型响应: ${String(outputs.text ?? "")}`);
       const endTime = Date.now();
       return {
         ...result,
