@@ -14,7 +14,7 @@ export class WorkflowRunService {
     const response = await http.post<NodeExecuteData>(
       `${this.baseUrl}/llm`,
       request,
-      { silent: true, timeout: 1000000 },
+      { silent: true, timeout: 50_000 },
     );
     return response.data;
   }

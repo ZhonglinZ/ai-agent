@@ -24,6 +24,12 @@ import type {
 } from "./types";
 import { NodeExecutionStatus as Status } from "./types";
 import { workflowRunService } from "@/lib/services/workflowRun.service";
+import {
+  LLM_RETRY_DEFAULTS,
+  getBackoffDelayMs,
+  isRetryableError,
+} from "@/lib/services/retry";
+import { sleep } from "@/lib/utils";
 
 // ==================== 工具函数 ====================
 function writeNodeOutputs(
@@ -198,47 +204,66 @@ export const llmNodeExecutor: NodeExecutor = {
     context.onNodeStatusChange?.(node.id, Status.RUNNING);
     context.onLog?.(node.id, `🤖 开始调用大模型: ${data.model || "默认模型"}`);
 
-    try {
-      const res = await workflowRunService.executeLLMNode({
-        runId: context.runId,
-        nodeId: node.id,
-        variables: context.variables,
-        nodeData: data,
-      });
+    const { maxRetries, baseMs, capMs } = LLM_RETRY_DEFAULTS;
+    let lastErrorMessage = "LLM 节点执行失败";
 
-      res.logs?.forEach((log) => {
-        context.onLog?.(node.id, log);
-      });
-
-      const outputs = writeNodeOutputs(
-        data.label,
-        res.outputs,
-        context.variables,
-      );
-      context.onLog?.(node.id, `✅ 模型响应: ${String(outputs.text ?? "")}`);
-      const endTime = Date.now();
-      return {
-        ...result,
-        status: Status.SUCCESS,
-        endTime,
-        duration: endTime - startTime,
-        outputs,
-        logs: result.logs,
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "LLM 节点执行失败";
-      context.onLog?.(node.id, `❌ ${message}`);
-      const endTime = Date.now();
-      return {
-        ...result,
-        status: Status.FAILED,
-        endTime,
-        duration: endTime - startTime,
-        error: message,
-        logs: result.logs,
-      };
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          context.onLog?.(
+            node.id,
+            `🔄 第 ${attempt} 次重试（共可重试 ${maxRetries} 次）`,
+          );
+        }
+        const res = await workflowRunService.executeLLMNode({
+          runId: context.runId,
+          nodeId: node.id,
+          variables: context.variables,
+          nodeData: data,
+        });
+        res.logs?.forEach((log) => {
+          context.onLog?.(node.id, log);
+        });
+        const outputs = writeNodeOutputs(
+          data.label,
+          res.outputs,
+          context.variables,
+        );
+        context.onLog?.(node.id, `✅ 模型响应: ${String(outputs.text ?? "")}`);
+        const endTime = Date.now();
+        return {
+          ...result,
+          status: Status.SUCCESS,
+          endTime,
+          duration: endTime - startTime,
+          outputs,
+          logs: result.logs,
+        };
+      } catch (error) {
+        lastErrorMessage =
+          error instanceof Error ? error.message : "LLM 节点执行失败";
+        const canRetry = attempt < maxRetries && isRetryableError(error);
+        if (!canRetry) {
+          context.onLog?.(node.id, `❌ ${lastErrorMessage}`);
+          break;
+        }
+        const delayMs = getBackoffDelayMs(attempt);
+        context.onLog?.(
+          node.id,
+          `⚠️ ${lastErrorMessage}，${Math.round(delayMs / 1000)}s 后重试`,
+        );
+        await sleep(delayMs);
+      }
     }
+    const endTime = Date.now();
+    return {
+      ...result,
+      status: Status.FAILED,
+      endTime,
+      duration: endTime - startTime,
+      error: lastErrorMessage,
+      logs: result.logs,
+    };
   },
 };
 
