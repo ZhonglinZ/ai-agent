@@ -10,6 +10,7 @@ import {
   LoadingOutlined,
   MinusCircleOutlined,
   PlayCircleOutlined,
+  ReloadOutlined,
   StopOutlined,
 } from "@ant-design/icons";
 import { useWorkflowStore } from "@/lib/stores/workflowStore";
@@ -78,7 +79,10 @@ function getWorkflowStatusTag(status: WorkflowRunStatus) {
       return <Tag color="processing">执行中...</Tag>;
     case WorkflowRunStatus.STOPPED:
       return <Tag color="warning">已停止</Tag>;
+    case WorkflowRunStatus.PAUSED:
+      return <Tag color="warning">已暂停(可续跑)</Tag>;
     case WorkflowRunStatus.IDLE:
+      return <Tag color="default">待运行</Tag>;
     default:
       return <Tag color="default">待运行</Tag>;
   }
@@ -99,10 +103,15 @@ export const RunPanel: React.FC = () => {
   const startTime = useWorkflowRunStore((state) => state.startTime);
   const endTime = useWorkflowRunStore((state) => state.endTime);
 
+  const lastCheckpoint = useWorkflowRunStore((state) => state.lastCheckpoint);
   const startRun = useWorkflowRunStore((state) => state.startRun);
+  const resumeRun = useWorkflowRunStore((state) => state.resumeRun);
   const stopRun = useWorkflowRunStore((state) => state.stopRun);
   const isPanelOpen = useWorkflowRunStore((state) => state.isPanelOpen);
   const togglePanel = useWorkflowRunStore((state) => state.togglePanel);
+
+  const canResume =
+    status === WorkflowRunStatus.PAUSED && lastCheckpoint !== null;
   // 自动滚动到最新日志
   useEffect(() => {
     if (logsEndRef.current) {
@@ -143,7 +152,7 @@ export const RunPanel: React.FC = () => {
       </span>
     ),
     children: (
-      <div className="space-y-2 px-2">
+      <div className="space-y-2 px-2 h-48 overflow-auto">
         {nodes.map((node) => {
           const nodeStatus =
             nodeStatuses[node.id] || NodeExecutionStatus.PENDING;
@@ -246,6 +255,17 @@ export const RunPanel: React.FC = () => {
           <Button danger icon={<StopOutlined />} onClick={stopRun}>
             停止
           </Button>
+        ) : canResume ? (
+          <>
+            <Button onClick={() => startRun(nodes, edges)}>重新运行</Button>
+            <Button
+              type="primary"
+              icon={<ReloadOutlined />}
+              onClick={() => resumeRun(nodes, edges)}
+            >
+              从断点继续
+            </Button>
+          </>
         ) : (
           <Button
             type="primary"

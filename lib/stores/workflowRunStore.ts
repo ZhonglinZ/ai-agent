@@ -16,6 +16,7 @@ import {
   WorkflowRunStatus,
   type NodeExecutionResult,
   type WorkflowRunResult,
+  type WorkflowRunCheckpoint,
 } from "@/lib/workflow/engine/types";
 import { workflowEngine } from "@/lib/workflow/engine/workflowEngine";
 import {
@@ -74,6 +75,9 @@ export interface WorkflowRunState {
 
   // 预览面板是否显示
   isPreviewPanelOpen: boolean;
+
+  // 检查点
+  lastCheckpoint: WorkflowRunCheckpoint | null;
 }
 
 /**
@@ -117,6 +121,12 @@ export interface WorkflowRunActions {
   // 打开/关闭预览面板
   openPreviewPanel: () => void;
   closePreviewPanel: () => void;
+
+  /** 从断点继续（需 status === PAUSED 且有 checkpoint） */
+  resumeRun: (
+    nodes: WorkflowNode[],
+    edges: Edge[],
+  ) => Promise<WorkflowRunResult | null>;
 }
 
 export type WorkflowRunStore = WorkflowRunState & WorkflowRunActions;
@@ -138,6 +148,7 @@ const initialState: WorkflowRunState = {
   validationResult: null,
   runningEdges: [],
   isPreviewPanelOpen: false,
+  lastCheckpoint: null,
 };
 
 /**
@@ -193,6 +204,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
       isPanelOpen: true,
       validationResult: null,
       runningEdges: [],
+      lastCheckpoint: null,
     });
 
     // 初始化所有节点为待执行状态
@@ -262,6 +274,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
       endTime: result.endTime,
       status: result.status,
       runningEdges: [], // 清除运行中的边
+      lastCheckpoint: result.checkpoint || null,
     });
 
     return result;
@@ -276,6 +289,100 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
     });
   },
 
+  // 从断点继续
+  resumeRun: async (nodes, edges) => {
+    const { lastCheckpoint, status, addLog } = get();
+
+    if (status !== WorkflowRunStatus.PAUSED || !lastCheckpoint) {
+      addLog("system", "⚠️ 当前没有可续跑的断点");
+      return null;
+    }
+
+    if (
+      lastCheckpoint.failedNodeId &&
+      !nodes.some((n) => n.id === lastCheckpoint.failedNodeId)
+    ) {
+      addLog("system", "⚠️ 断点节点已不在画布中，无法续跑，请重新开始");
+      return null;
+    }
+
+    set({
+      status: WorkflowRunStatus.RUNNING,
+      endTime: null,
+      isPanelOpen: true,
+      nodeStatuses: {
+        ...lastCheckpoint.nodeStatuses,
+        ...(lastCheckpoint.failedNodeId
+          ? {
+              [lastCheckpoint.failedNodeId]: NodeExecutionStatus.PENDING,
+            }
+          : {}),
+      },
+      nodeResults: lastCheckpoint.nodeResults.filter(
+        (r) => r.nodeId !== lastCheckpoint.failedNodeId,
+      ),
+    });
+
+    const result = await workflowEngine.resume(lastCheckpoint, nodes, edges, {
+      variables: lastCheckpoint.inputVariables,
+      callbacks: {
+        onWorkflowStatusChange: (s) => {
+          set({ status: s });
+          if (s !== WorkflowRunStatus.RUNNING) {
+            set({ runningEdges: [] });
+          }
+        },
+        onNodeStatusChange: (nodeId, nodeStatus) => {
+          set((state) => ({
+            nodeStatuses: {
+              ...state.nodeStatuses,
+              [nodeId]: nodeStatus,
+            },
+          }));
+
+          if (nodeStatus === NodeExecutionStatus.RUNNING) {
+            const incomingEdges = edges.filter((e) => e.target === nodeId);
+            set((state) => ({
+              runningEdges: [
+                ...new Set([
+                  ...state.runningEdges,
+                  ...incomingEdges.map((e) => e.id),
+                ]),
+              ],
+            }));
+          }
+
+          if (nodeStatus === NodeExecutionStatus.SUCCESS) {
+            const outgoingEdges = edges.filter((e) => e.source === nodeId);
+            set((state) => ({
+              runningEdges: [
+                ...new Set([
+                  ...state.runningEdges,
+                  ...outgoingEdges.map((e) => e.id),
+                ]),
+              ],
+            }));
+          }
+        },
+        onLog: (nodeId, message) => {
+          get().addLog(nodeId, message);
+        },
+      },
+    });
+
+    set({
+      runId: result.runId,
+      nodeResults: result.nodeResults,
+      finalOutput: result.finalOutput || null,
+      endTime: result.endTime,
+      status: result.status,
+      runningEdges: [],
+      lastCheckpoint: result.checkpoint ?? null,
+    });
+
+    return result;
+  },
+
   // 重置运行状态
   resetRun: () => {
     set({
@@ -287,6 +394,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
       finalOutput: null,
       startTime: null,
       endTime: null,
+      lastCheckpoint: null,
     });
   },
 
