@@ -70,10 +70,10 @@ interface WorkflowState {
   toggleCollision: () => void;
 
   // ==================== 工作流 Actions ====================
-    /** 保存工作流到本地存储 */
-    saveWorkflow: () => Promise<boolean>;
-    /** 从本地存储加载工作流画布数据 */
-    loadWorkflowData: (workflowId: string) => Promise<boolean>;
+  /** 保存工作流到本地存储 */
+  saveWorkflow: () => Promise<boolean>;
+  /** 从本地存储加载工作流画布数据 */
+  loadWorkflowData: (workflowId: string) => Promise<boolean>;
 }
 
 /**
@@ -131,7 +131,6 @@ export const useWorkflowStore = create<WorkflowState>()(
       setEdges: (edges) => set({ edges }),
 
       onNodesChange: (changes) => {
-        console.log("=== onNodesChange 节点 触发===");
         set((state) => ({
           nodes: applyNodeChanges(changes, state.nodes),
           isDirty: true,
@@ -153,7 +152,7 @@ export const useWorkflowStore = create<WorkflowState>()(
               type: "default",
               animated: false,
             },
-            state.edges
+            state.edges,
           ),
           isDirty: true,
         }));
@@ -187,7 +186,7 @@ export const useWorkflowStore = create<WorkflowState>()(
                   ...node,
                   data: { ...node.data, ...data } as WorkflowNodeData,
                 }
-              : node
+              : node,
           ),
           isDirty: true,
         }));
@@ -197,7 +196,7 @@ export const useWorkflowStore = create<WorkflowState>()(
         set((state) => ({
           nodes: state.nodes.filter((node) => node.id !== nodeId),
           edges: state.edges.filter(
-            (edge) => edge.source !== nodeId && edge.target !== nodeId
+            (edge) => edge.source !== nodeId && edge.target !== nodeId,
           ),
           selectedNodeId:
             state.selectedNodeId === nodeId ? null : state.selectedNodeId,
@@ -213,15 +212,16 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       cancelPlacingNode: () => set({ placingNodeType: null }),
 
-      toggleCollision: () => set((state) => ({ enableCollision: !state.enableCollision })),
+      toggleCollision: () =>
+        set((state) => ({ enableCollision: !state.enableCollision })),
 
       // ==================== 工作流 Actions ====================
       saveWorkflow: async () => {
         const state = useWorkflowStore.getState();
         const { workflow, nodes, edges } = state;
-        
+
         if (!workflow?.id) {
-          console.error('无法保存：工作流 ID 不存在');
+          console.error("无法保存：工作流 ID 不存在");
           return false;
         }
 
@@ -230,13 +230,13 @@ export const useWorkflowStore = create<WorkflowState>()(
             workflow.id,
             workflow.name,
             nodes,
-            edges
+            edges,
           );
-          
+
           set({ isDirty: false });
           return true;
         } catch (error) {
-          console.error('保存工作流失败:', error);
+          console.error("保存工作流失败:", error);
           return false;
         }
       },
@@ -244,7 +244,7 @@ export const useWorkflowStore = create<WorkflowState>()(
       loadWorkflowData: async (workflowId: string) => {
         try {
           const data = await workflowService.getWorkflowData(workflowId);
-          
+
           if (data && data.nodes && data.nodes.length > 0) {
             set({
               nodes: data.nodes,
@@ -252,10 +252,10 @@ export const useWorkflowStore = create<WorkflowState>()(
             });
             return true;
           }
-          
+
           return false;
         } catch (error) {
-          console.error('加载工作流数据失败:', error);
+          console.error("加载工作流数据失败:", error);
           return false;
         }
       },
@@ -270,7 +270,7 @@ export const useWorkflowStore = create<WorkflowState>()(
       // 在保存状态时，过滤掉节点的 width, height, measured 等属性
       onSave: (state) => ({
         nodes: state.nodes.map(
-          ({ width, height, measured, selected, ...rest }) => rest
+          ({ width, height, measured, selected, ...rest }) => rest,
         ),
         edges: state.edges,
       }),
@@ -280,6 +280,6 @@ export const useWorkflowStore = create<WorkflowState>()(
       equality: (past, present) => {
         return past.nodes === present.nodes && past.edges === present.edges;
       },
-    }
-  )
+    },
+  ),
 );
