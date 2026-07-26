@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -12,7 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-/// Mirrors `StoredWorkflowData` in lib/services/workflowStorage.service.ts
 enum WorkflowRunMode {
   once
   periodic
@@ -23,27 +17,24 @@ enum WorkflowStatus {
   online
 }
 
+enum AgentStatus {
+  draft
+  published
+  offline
+}
+
 model StoredWorkflow {
   id          String          @id
   name        String
   description String?
   runMode     WorkflowRunMode
   status      WorkflowStatus
-  /// Canvas nodes (`WorkflowNode[]` serialized as JSON)
   nodes       Json
-  /// Canvas edges (`WorkflowEdge[]` serialized as JSON)
   edges       Json
   createdAt   DateTime
   updatedAt   DateTime
 
   @@map("stored_workflows")
-}
-
-/// Mirrors `Agent` in lib/types/agent.ts
-enum AgentStatus {
-  draft
-  published
-  offline
 }
 
 model Agent {
@@ -54,12 +45,66 @@ model Agent {
   status       AgentStatus @default(draft)
   modelId      String
   rolePrompt   String      @default("")
-  /// `AgentAbilities` serialized as JSON
   abilities    Json
-  /// `AgentConversationConfig` serialized as JSON
   conversation Json
   createdAt    DateTime
   updatedAt    DateTime
 
   @@map("agents")
+}
+
+model KnowledgeBase {
+  id            String              @id
+  name          String
+  description   String              @default("")
+  icon          String              @default("📚")
+  fileType      String              @default("text")
+  status        String              @default("active")
+  tags          Json                @default("[]")
+  chunkSize     Int                 @default(500)
+  chunkOverlap  Int                 @default(50)
+  parseStrategy String              @default("text")
+  chunkStrategy String              @default("auto")
+  createdAt     DateTime
+  updatedAt     DateTime
+  documents     KnowledgeDocument[]
+
+  @@map("knowledge_bases")
+}
+
+model KnowledgeDocument {
+  id              String           @id
+  knowledgeBaseId String
+  name            String
+  size            Int
+  type            String
+  charCount       Int              @default(0)
+  chunkCount      Int              @default(0)
+  status          String           @default("chunking")
+  errorMessage    String?
+  content         String           @default("")
+  uploadedAt      DateTime
+  parsedAt        DateTime?
+  knowledgeBase   KnowledgeBase    @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  chunks          KnowledgeChunk[]
+
+  @@index([knowledgeBaseId])
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id              String                       @id
+  documentId      String
+  knowledgeBaseId String
+  content         String
+  charCount       Int
+  index           Int
+  startIndex      Int
+  endIndex        Int
+  embedding       Unsupported("vector(1024)")?
+  document        KnowledgeDocument            @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeBaseId])
+  @@index([documentId])
+  @@map("knowledge_chunks")
 }
