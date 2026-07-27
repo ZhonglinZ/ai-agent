@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ApiOutlined,
+  BookOutlined,
   BranchesOutlined,
   CodeOutlined,
   PlayCircleOutlined,
@@ -16,6 +17,7 @@ import type {
   LLMNodeData,
   APINodeData,
   BranchNodeData,
+  KnowledgeNodeData,
 } from "./types";
 import { StartNode } from "@/components/workflow/nodes/StartNode";
 import { EndNode } from "@/components/workflow/nodes/EndNode";
@@ -31,6 +33,8 @@ import { APINode } from "@/components/workflow/nodes/APINode";
 import { APIPropertyPanel } from "@/components/workflow/panels/apiPanel";
 import { BranchPropertyPanel } from "@/components/workflow/panels/branchPanel";
 import { BranchNode } from "@/components/workflow/nodes/BranchNode";
+import { KnowledgeNode } from "@/components/workflow/nodes/KnowledgeNode";
+import { KnowledgePropertyPanel } from "@/components/workflow/panels/knowledgePanel";
 
 /**
  * 注册所有节点类型
@@ -178,25 +182,61 @@ def main(arg1: str, arg2: str) -> dict:
   // ==================== 注册分支器节点 ====================
   nodeRegistry.register<BranchNodeData>({
     type: NodeType.BRANCH,
-    label: '分支器',
-    description: '根据条件将工作流引导到不同的分支路径',
+    label: "分支器",
+    description: "根据条件将工作流引导到不同的分支路径",
     icon: React.createElement(BranchesOutlined),
-    iconColor: 'orange',
-    category: 'logic',  // 逻辑控制分类
+    iconColor: "orange",
+    category: "logic", // 逻辑控制分类
     component: BranchNode,
     propertyPanel: BranchPropertyPanel,
     maxInputs: 1,
-    maxOutputs: 0,  // 动态输出，不限制
+    maxOutputs: 0, // 动态输出，不限制
     defaultData: {
-      label: '分支器',
+      label: "分支器",
       branches: [
         {
-          id: 'branch-1',
-          label: '如果',
-          condition: '',
+          id: "branch-1",
+          label: "如果",
+          condition: "",
         },
       ],
-      showElseBranch: true,  // 默认显示否则分支
+      showElseBranch: true, // 默认显示否则分支
+    },
+  });
+
+  // ==================== 注册知识库节点 ====================
+  nodeRegistry.register<KnowledgeNodeData>({
+    type: NodeType.KNOWLEDGE,
+    label: "知识库",
+    description: "调用知识库生成答案",
+    icon: React.createElement(BookOutlined),
+    iconColor: "purple",
+    category: "action",
+    component: KnowledgeNode,
+    // 使用自定义属性面板（复杂表单）
+    propertyPanel: KnowledgePropertyPanel,
+    maxInputs: 1,
+    maxOutputs: 1,
+    defaultData: {
+      label: "知识库",
+      knowledgeBaseId: "",
+      query: "",
+      topK: 5,
+      scoreThreshold: 0.2,
+      outputs: [
+        {
+          id: "ctx",
+          name: "context",
+          type: "string",
+          description: "拼接后的检索文本",
+        },
+        {
+          id: "chunks",
+          name: "chunks",
+          type: "array",
+          description: "命中切片列表",
+        },
+      ],
     },
   });
 }

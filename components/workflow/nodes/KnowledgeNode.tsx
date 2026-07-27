@@ -1,46 +1,33 @@
 /**
- * 大模型节点组件
+ * 知识库节点组件
  *
- * 用于调用大语言模型（LLM）生成内容
- * 显示模型信息和输出变量列表
+ * 用于调用知识库生成内容
+ * 显示知识库信息和输出变量列表
  */
 "use client";
 
 import React, { useState } from "react";
-import { RobotOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
+import { DownOutlined, RightOutlined, BookOutlined } from "@ant-design/icons";
 import { Position } from "@xyflow/react";
-import type { LLMNodeData } from "@/lib/workflow/types";
+import type { KnowledgeNodeData } from "@/lib/workflow/types";
 import { CustomHandle } from "./CustomHandle";
 
-/**
- * Mock 模型数据
- * 模拟真实 Agent 平台的模型列表
- */
-export const MODEL_OPTIONS = [
-  // { id: "gpt-4", name: "GPT-4", provider: "OpenAI" },
-  // { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo", provider: "OpenAI" },
-  // { id: "claude-3-opus", name: "Claude 3 Opus", provider: "Anthropic" },
-  // { id: "claude-3-sonnet", name: "Claude 3 Sonnet", provider: "Anthropic" },
-  { id: "qwen-max", name: "通义千问 Max", provider: "Alibaba" },
-  // { id: "glm-4", name: "GLM-4", provider: "Zhipu" },
-];
-
-interface LLMNodeProps {
+interface KnowledgeNodeProps {
   id: string;
-  data: LLMNodeData;
+  data: KnowledgeNodeData;
   selected?: boolean;
 }
 
 /**
  * 大模型节点组件
  */
-export const LLMNode: React.FC<LLMNodeProps> = ({ id, data, selected }) => {
+export const KnowledgeNode: React.FC<KnowledgeNodeProps> = ({
+  id,
+  data,
+  selected,
+}) => {
   const [showOutputs, setShowOutputs] = useState(true);
-
-  // 获取选择的模型名称
-  const selectedModel = MODEL_OPTIONS.find((m) => m.id === data.model);
-  const modelDisplayName = selectedModel?.name || "未配置模型";
-
+  const { knowledgeBaseName } = data;
   return (
     <div
       className={`
@@ -57,23 +44,23 @@ export const LLMNode: React.FC<LLMNodeProps> = ({ id, data, selected }) => {
       {/* 节点头部 */}
       <div className="flex items-center gap-3 p-3 pb-2">
         {/* 图标 */}
-        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white text-sm">
-          <RobotOutlined />
+        <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center text-white text-sm">
+          <BookOutlined />
         </div>
 
         {/* 标题 */}
-        <div className="font-medium text-sm text-gray-800">{data.label}</div>
+        <div className="font-medium text-sm text-gray-800">知识库</div>
       </div>
 
       {/* 模型信息区域 */}
       <div className="mx-3 mb-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
-        <div className="text-xs text-gray-500 mb-1">模型</div>
+        <div className="text-xs text-gray-500 mb-1">知识库名称</div>
         <div
           className={`text-sm ${
-            data.model ? "text-gray-800" : "text-gray-400"
+            knowledgeBaseName ? "text-gray-800" : "text-gray-400"
           }`}
         >
-          {modelDisplayName}
+          {knowledgeBaseName}
         </div>
       </div>
 

@@ -15,6 +15,7 @@ export enum NodeType {
   LLM = "llm", // 新增
   API = "api",
   BRANCH = "branch",
+  KNOWLEDGE = "knowledge",
   // ========== 后续扩展 ==========
   // HTTP_REQUEST = 'httpRequest',
   // CONDITION = 'condition',
@@ -271,6 +272,25 @@ export interface BranchNodeData extends BaseNodeData {
   showElseBranch: boolean;
 }
 
+export interface KnowledgeOutputVariable {
+  id: string;
+  name: string; // 建议默认 context / chunks
+  type: "string" | "array";
+  description?: string;
+}
+
+/**
+ * 知识库节点数据
+ */
+export interface KnowledgeNodeData extends BaseNodeData {
+  knowledgeBaseId: string;
+  knowledgeBaseName?: string;
+  /** 支持 {{开始.query}} 这类变量 */
+  query: string;
+  topK: number;
+  scoreThreshold: number;
+  outputs: KnowledgeOutputVariable[];
+}
 
 /**
  * 所有节点数据的联合类型
@@ -282,7 +302,8 @@ export type WorkflowNodeData =
   | CodeNodeData
   | LLMNodeData
   | APINodeData
-  | BranchNodeData;
+  | BranchNodeData
+  | KnowledgeNodeData;
 
 /**
  * 工作流节点类型
@@ -394,7 +415,7 @@ export interface FormField {
  * 属性面板组件的 Props
  */
 export interface PropertyPanelProps<
-  T extends WorkflowNodeData = WorkflowNodeData
+  T extends WorkflowNodeData = WorkflowNodeData,
 > {
   /** 节点 ID */
   nodeId: string;

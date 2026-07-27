@@ -21,6 +21,7 @@ import {
   EndNode,
   CodeNode,
   LLMNode,
+  KnowledgeNode,
 } from "@/components/workflow/nodes";
 import {
   PreviewPanel,
@@ -51,6 +52,7 @@ const nodeTypes: NodeTypes = {
   [NodeType.LLM]: LLMNode,
   [NodeType.API]: APINode,
   [NodeType.BRANCH]: BranchNode,
+  [NodeType.KNOWLEDGE]: KnowledgeNode,
 };
 /**
  * 画布内部组件
