@@ -18,7 +18,7 @@ import { MainLayout } from "@/components/layouts/MainLayout";
 import { DocumentPreview } from "@/components/knowledge/DocumentPreview";
 import { ChapterTree } from "@/components/knowledge/ChapterTree";
 import { ChunkList } from "@/components/knowledge/ChunkList";
-import { knowledgeService } from "@/lib/services/knowledge.service";
+import { knowledgeService } from "@/lib/services/knowledgeNew.service";
 import { initMockData } from "@/lib/services/knowledge.mock";
 import type {
   DocumentDetail,
@@ -76,46 +76,25 @@ export default function KnowledgeDetailPage() {
   const [isHitTesting, setIsHitTesting] = useState(false);
 
   useEffect(() => {
-    if (!knowledgeBaseId) return;
-    initMockData();
+    loadKnowledgeBase();
+  }, [knowledgeBaseId]);
 
-    const base = knowledgeService.getKnowledgeBaseById(knowledgeBaseId);
+  const loadKnowledgeBase = async () => {
+    if (!knowledgeBaseId) {
+      setKnowledgeBase(null);
+      setDocuments([]);
+      setSelectedDocId("");
+      return;
+    }
+    const base = await knowledgeService.getKnowledgeBaseById(knowledgeBaseId);
     const docs =
-      knowledgeService.getDocumentsByKnowledgeBaseId(knowledgeBaseId);
-    setKnowledgeBase(base);
-    setDocuments(docs);
+      await knowledgeService.getDocumentsByKnowledgeBaseId(knowledgeBaseId);
+    setKnowledgeBase(base || null);
+    setDocuments(docs || []);
     setSelectedDocId((prev) => prev || docs[0]?.id || "");
-  }, [knowledgeBaseId]);
-
-  useEffect(() => {
-    if (!knowledgeBaseId) return;
-    const history = knowledgeService.getHitTestHistory(knowledgeBaseId);
-    setHitHistory(history);
-  }, [knowledgeBaseId]);
-
-  const buildMockHitResults = (
-    detail: DocumentDetail | null,
-  ): HitTestResult[] => {
-    if (!detail?.chunks?.length) return [];
-    const scores = [0.92, 0.86, 0.78, 0.62, 0.45];
-    const keywords = ["智能客服", "知识库", "召回", "切片"];
-    return detail.chunks.slice(0, scores.length).map((chunk, index) => ({
-      chunk,
-      score: scores[index] ?? 0.4,
-      matchedKeywords: keywords.slice(0, (index % 2) + 1),
-    }));
   };
 
-  useEffect(() => {
-    if (activeTab !== "hitTest") return;
-    if (hitResults.length > 0) return;
-    const mockResults = buildMockHitResults(detail);
-    if (mockResults.length === 0) return;
-    setHitResults(mockResults);
-    setSelectedHitChunkId(mockResults[0]?.chunk.id || "");
-  }, [activeTab, detail, hitResults.length]);
-
-  const handleRunHitTest = () => {
+  const handleRunHitTest = async () => {
     if (!knowledgeBaseId) return;
     const trimmed = hitQuery.trim();
     if (!trimmed) {
@@ -125,7 +104,7 @@ export default function KnowledgeDetailPage() {
     setIsHitTesting(true);
 
     // 调用服务层方法获取原始结果
-    const rawResults = knowledgeService.hitTest(knowledgeBaseId, trimmed);
+    const rawResults = await knowledgeService.hitTest(knowledgeBaseId, trimmed);
 
     // 根据策略过滤结果
     const filteredResults = rawResults
@@ -136,17 +115,17 @@ export default function KnowledgeDetailPage() {
     setSelectedHitChunkId(filteredResults[0]?.chunk.id || "");
 
     // 保存到历史记录
-    const historyItem: HitTestHistory = {
-      id: `hit_${Date.now()}`,
-      query: trimmed,
-      results: filteredResults,
-      testedAt: new Date().toISOString(),
-    };
-    const nextHistory = knowledgeService.appendHitTestHistory(
-      knowledgeBaseId,
-      historyItem,
-    );
-    setHitHistory(nextHistory);
+    // const historyItem: HitTestHistory = {
+    //   id: `hit_${Date.now()}`,
+    //   query: trimmed,
+    //   results: filteredResults,
+    //   testedAt: new Date().toISOString(),
+    // };
+    // const nextHistory = knowledgeService.appendHitTestHistory(
+    //   knowledgeBaseId,
+    //   historyItem,
+    // );
+    // setHitHistory(nextHistory);
     setIsHitTesting(false);
   };
 
@@ -160,20 +139,24 @@ export default function KnowledgeDetailPage() {
   // 清空历史记录
   const handleClearHistory = () => {
     if (!knowledgeBaseId) return;
-    knowledgeService.saveHitTestHistory(knowledgeBaseId, []);
+    // knowledgeService.saveHitTestHistory(knowledgeBaseId, []);
     setHitHistory([]);
   };
 
   useEffect(() => {
+    loadDetail();
+  }, [selectedDocId]);
+
+  const loadDetail = async () => {
     if (!selectedDocId) {
       setDetail(null);
       return;
     }
-    const nextDetail = knowledgeService.getDocumentDetail(selectedDocId);
+    const nextDetail = await knowledgeService.getDocumentDetail(selectedDocId);
     setDetail(nextDetail);
     setSelectedChapterId("");
     setSelectedChunkId("");
-  }, [selectedDocId]);
+  };
 
   const selectedDocument = documents.find((doc) => doc.id === selectedDocId);
   const selectedChunk = detail?.chunks.find(

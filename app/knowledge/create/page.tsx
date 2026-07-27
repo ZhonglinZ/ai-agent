@@ -27,7 +27,7 @@ import {
 import type { UploadProps } from "antd";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { PageHeader } from "@/components/common/PageHeader";
-import { knowledgeService } from "@/lib/services/knowledge.service";
+import { knowledgeService } from "@/lib/services/knowledgeNew.service";
 import { createMockDocumentDetail } from "@/lib/services/knowledge.mock";
 import type {
   FileDataType,
@@ -41,24 +41,16 @@ const { Dragger } = Upload;
 const { Text } = Typography;
 
 // 图标选项
-const ICON_OPTIONS = [
-  "📚",
-  "📘",
-  "📗",
-  "📕",
-  "📙",
-  "📓",
-  "📔",
-  "📒",
-  "🗂️",
-  "📁",
-  "📂",
-  "🗃️",
-  "💼",
-  "🔧",
-  "⚙️",
-  "📊",
-];
+const ICON_OPTIONS = ["📚", "📘", "📂", "🗃️", "💼", "🔧", "⚙️", "📊"];
+
+function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(reader.error ?? new Error("读文件失败"));
+    reader.readAsText(file);
+  });
+}
 
 // 解析策略选项
 const PARSE_STRATEGIES: {
@@ -67,21 +59,21 @@ const PARSE_STRATEGIES: {
   description: string;
 }[] = [
   { value: "text", label: "文字识别", description: "基于规则的文档提取" },
-  {
-    value: "ocr",
-    label: "图片文字识别(OCR)",
-    description: "解析图片、扫描件中的文字信息",
-  },
-  {
-    value: "table",
-    label: "表格解析",
-    description: "保留文内表格中的结构化信息",
-  },
-  {
-    value: "image",
-    label: "图片提取",
-    description: "识别并提取原文档中的图片",
-  },
+  // {
+  //   value: "ocr",
+  //   label: "图片文字识别(OCR)",
+  //   description: "解析图片、扫描件中的文字信息",
+  // },
+  // {
+  //   value: "table",
+  //   label: "表格解析",
+  //   description: "保留文内表格中的结构化信息",
+  // },
+  // {
+  //   value: "image",
+  //   label: "图片提取",
+  //   description: "识别并提取原文档中的图片",
+  // },
 ];
 
 // 切片策略选项
@@ -91,22 +83,22 @@ const CHUNK_STRATEGIES: {
   description: string;
 }[] = [
   { value: "auto", label: "自动切片", description: "通用格式文本常见切分方法" },
-  {
-    value: "delimiter",
-    label: "按常见标识符切分",
-    description: "配置常见的标识符、切片最大长度等选项",
-  },
-  { value: "page", label: "按页切分", description: "适用于PPT、单页图标等" },
-  {
-    value: "regex",
-    label: "自定义正则切分",
-    description: "通过正则表达式，自定义匹配切片分隔符",
-  },
-  {
-    value: "hierarchy",
-    label: "按层级切分",
-    description: "根据文档中的标题层级结构，智能切分内容片段",
-  },
+  // {
+  //   value: "delimiter",
+  //   label: "按常见标识符切分",
+  //   description: "配置常见的标识符、切片最大长度等选项",
+  // },
+  // { value: "page", label: "按页切分", description: "适用于PPT、单页图标等" },
+  // {
+  //   value: "regex",
+  //   label: "自定义正则切分",
+  //   description: "通过正则表达式，自定义匹配切片分隔符",
+  // },
+  // {
+  //   value: "hierarchy",
+  //   label: "按层级切分",
+  //   description: "根据文档中的标题层级结构，智能切分内容片段",
+  // },
 ];
 
 export default function CreateKnowledgePage() {
@@ -137,38 +129,29 @@ export default function CreateKnowledgePage() {
         tags: [],
       };
 
-      const created = knowledgeService.createKnowledgeBase(request);
-
+      const { knowledgeBaseId } =
+        await knowledgeService.createKnowledgeBase(request);
       // 模拟文件上传与解析
       if (fileList.length > 0) {
-        for (const file of fileList) {
-          const document = knowledgeService.addDocument(created.id, {
-            name: file.name,
+        for (const item of fileList) {
+          const file: File = item.originFileObj ?? item;
+          // 前端再拦一层扩展名
+          const name = file.name.toLowerCase();
+          if (!name.endsWith(".txt") && !name.endsWith(".md")) {
+            message.warning(`${file.name} 已跳过（仅支持 txt/md）`);
+            continue;
+          }
+          const content = await readFileAsText(file);
+          if (!content.trim()) {
+            message.warning(`${file.name} 内容为空，已跳过`);
+            continue;
+          }
+          // 后端 ingest 只要 name + content 即可；size/type 可选
+          await knowledgeService.addDocument(knowledgeBaseId, {
             size: file.size,
             type: file.type,
-          });
-
-          const detail = createMockDocumentDetail({
-            ...document,
-            status: "completed",
-            parsedAt: new Date().toISOString(),
-          });
-          const charCount = detail.content.length;
-          const chunkCount = detail.chunks.length;
-
-          knowledgeService.updateDocumentStatus(document.id, "completed", {
-            charCount,
-            chunkCount,
-          });
-          knowledgeService.saveDocumentDetail(document.id, {
-            ...detail,
-            document: {
-              ...detail.document,
-              charCount,
-              chunkCount,
-              status: "completed",
-              parsedAt: new Date().toISOString(),
-            },
+            name: file.name,
+            content,
           });
         }
       }
@@ -178,9 +161,9 @@ export default function CreateKnowledgePage() {
         content: "创建成功",
         duration: 2,
       });
-      router.push(`/knowledge/${created.id}`);
+      router.push(`/knowledge/${knowledgeBaseId}`);
     } catch (error) {
-      message.error("创建失败");
+      message.error(`创建失败: ${error}`);
     } finally {
       setLoading(false);
     }
@@ -190,7 +173,7 @@ export default function CreateKnowledgePage() {
   const uploadProps: UploadProps = {
     name: "file",
     multiple: true,
-    accept: ".doc,.docx,.pdf,.txt,.md",
+    accept: ".txt,.md",
     fileList,
     beforeUpload: (file) => {
       // 检查文件大小（最大 200MB）
@@ -293,15 +276,15 @@ export default function CreateKnowledgePage() {
                       </div>
                     ),
                   },
-                  {
-                    value: "table",
-                    label: (
-                      <div className="flex items-center gap-2 px-2 py-1">
-                        <TableOutlined />
-                        <span>表格型数据</span>
-                      </div>
-                    ),
-                  },
+                  // {
+                  //   value: "table",
+                  //   label: (
+                  //     <div className="flex items-center gap-2 px-2 py-1">
+                  //       <TableOutlined />
+                  //       <span>表格型数据</span>
+                  //     </div>
+                  //   ),
+                  // },
                 ]}
               />
             </Form.Item>

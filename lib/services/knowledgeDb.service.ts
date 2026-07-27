@@ -208,6 +208,15 @@ class KnowledgeDbService {
       chunks: row.chunks.map(rowToChunk),
     };
   }
+
+  async listDocsByKnowledgeBaseId(
+    kbId: string,
+  ): Promise<KnowledgeDocumentDTO[]> {
+    const rows = await prisma.knowledgeDocument.findMany({
+      where: { knowledgeBaseId: kbId },
+    });
+    return rows.map(rowToDocument);
+  }
 }
 
 export const knowledgeBaseDbService = new KnowledgeDbService();

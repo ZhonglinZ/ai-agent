@@ -12,9 +12,8 @@ import type { AgentAbilityRef } from "@/lib/types/agent";
 import type { KnowledgeBase } from "@/lib/types/knowledge";
 import type { Workflow } from "@/lib/types/workflow";
 import { runModeMap, statusMap } from "@/lib/types/workflow";
-import { knowledgeService } from "@/lib/services/knowledge.service";
+import { knowledgeService } from "@/lib/services/knowledgeNew.service";
 import { workflowService } from "@/lib/services/workflow.service";
-import { initMockData } from "@/lib/services/knowledge.mock";
 import { cn } from "@/lib/utils";
 import {
   AgentAbilitySelectModal,
@@ -126,9 +125,11 @@ export const AgentAbilityPanel: React.FC<AgentAbilityPanelProps> = ({
 
   // 从列表页数据源加载知识库
   useEffect(() => {
-    initMockData();
-    const bases = knowledgeService.getKnowledgeBases();
-    setKnowledgeOptions(mapKnowledgeOptions(bases));
+    const load = async () => {
+      const bases = await knowledgeService.getKnowledgeBases();
+      setKnowledgeOptions(mapKnowledgeOptions(bases));
+    };
+    load();
   }, []);
 
   // 监听 store 变化，同步本地选中状态

@@ -28,7 +28,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { PageHeader } from "@/components/common/PageHeader";
-import { knowledgeService } from "@/lib/services/knowledge.service";
+import { knowledgeService } from "@/lib/services/knowledgeNew.service";
 import { initMockData } from "@/lib/services/knowledge.mock";
 import type { KnowledgeBase } from "@/lib/types/knowledge";
 
@@ -69,16 +69,14 @@ export default function KnowledgeListPage() {
 
   // 初始化加载数据
   useEffect(() => {
-    // 初始化 Mock 数据
-    initMockData();
     loadData();
   }, []);
 
   // 加载数据
-  const loadData = () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = knowledgeService.getKnowledgeBases();
+      const data = await knowledgeService.getKnowledgeBases();
       setKnowledgeBases(data);
     } finally {
       setLoading(false);
@@ -88,26 +86,28 @@ export default function KnowledgeListPage() {
   // 搜索过滤
   const filteredData = useMemo(() => {
     if (!searchKeyword.trim()) return knowledgeBases;
-    return knowledgeService.searchKnowledgeBases(searchKeyword);
+    return knowledgeBases.filter((kb) =>
+      kb.name.toLowerCase().includes(searchKeyword.toLowerCase()),
+    );
   }, [knowledgeBases, searchKeyword]);
 
   // 删除知识库
   const handleDelete = (id: string) => {
-    const success = knowledgeService.deleteKnowledgeBase(id);
-    if (success) {
-      message.open({
-        type: "success",
-        content: "删除成功",
-        duration: 2,
-      });
-      loadData();
-    } else {
-      message.open({
-        type: "error",
-        content: "删除失败",
-        duration: 2,
-      });
-    }
+    // const success = knowledgeService.deleteKnowledgeBase(id);
+    // if (success) {
+    //   message.open({
+    //     type: "success",
+    //     content: "删除成功",
+    //     duration: 2,
+    //   });
+    //   loadData();
+    // } else {
+    //   message.open({
+    //     type: "error",
+    //     content: "删除失败",
+    //     duration: 2,
+    //   });
+    // }
   };
 
   // 表格列配置
