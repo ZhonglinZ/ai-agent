@@ -12,6 +12,7 @@ import type {
   WorkflowEdge,
   WorkflowNodeData,
   APINodeData,
+  KnowledgeNodeData,
 } from "./types";
 import {
   NodeType,
@@ -55,7 +56,7 @@ export interface WorkflowVariable {
  */
 export function getUpstreamNodeIds(
   nodeId: string,
-  edges: WorkflowEdge[]
+  edges: WorkflowEdge[],
 ): string[] {
   const result: string[] = [];
   const visited = new Set<string>();
@@ -92,7 +93,7 @@ export function getUpstreamNodeIds(
  * @returns 变量列表（不含来源信息）
  */
 export function extractNodeOutputs(
-  node: WorkflowNode
+  node: WorkflowNode,
 ): Omit<
   WorkflowVariable,
   "sourceNodeId" | "sourceNodeLabel" | "sourceNodeType"
@@ -144,7 +145,17 @@ export function extractNodeOutputs(
     }
 
     case NodeType.BRANCH: {
-      return []
+      return [];
+    }
+
+    case NodeType.KNOWLEDGE: {
+      const knowledgeData = data as KnowledgeNodeData;
+      return (knowledgeData.outputs || []).map((output) => ({
+        id: output.id,
+        name: output.name,
+        type: output.type,
+        description: output.description,
+      }));
     }
 
     default:
@@ -168,7 +179,7 @@ export function extractNodeOutputs(
 export function getAvailableVariables(
   nodeId: string,
   nodes: WorkflowNode[],
-  edges: WorkflowEdge[]
+  edges: WorkflowEdge[],
 ): WorkflowVariable[] {
   // 1. 获取所有上游节点 ID
   const upstreamNodeIds = getUpstreamNodeIds(nodeId, edges);

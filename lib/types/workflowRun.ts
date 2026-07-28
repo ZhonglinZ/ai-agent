@@ -1,4 +1,4 @@
-import { APINodeData, LLMNodeData } from "../workflow";
+import { APINodeData, KnowledgeNodeData, LLMNodeData } from "../workflow";
 
 export interface NodeExecuteBaseRequest {
   runId: string;
@@ -12,6 +12,10 @@ export interface LLMNodeExecuteRequest extends NodeExecuteBaseRequest {
 
 export interface APINodeExecuteRequest extends NodeExecuteBaseRequest {
   nodeData: APINodeData;
+}
+
+export interface KnowledgeNodeExecuteRequest extends NodeExecuteBaseRequest {
+  nodeData: KnowledgeNodeData;
 }
 
 export interface NodeExecuteData {

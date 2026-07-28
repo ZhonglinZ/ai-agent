@@ -179,7 +179,10 @@ export const LLMPropertyPanel: React.FC<PropertyPanelProps<LLMNodeData>> = ({
               </button>
             </Tooltip>
             <Tooltip title="插入变量">
-              <button className="p-1 hover:bg-gray-100 rounded">
+              <button
+                className="p-1 hover:bg-gray-100 rounded"
+                onClick={() => setShowVariableSelector(true)}
+              >
                 <VariableIcon />
               </button>
             </Tooltip>

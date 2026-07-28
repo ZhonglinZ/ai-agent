@@ -15,6 +15,7 @@ import type {
   APINodeData,
   CodeNodeData,
   BranchNodeData,
+  KnowledgeNodeData,
 } from "../types";
 import type {
   NodeExecutor,
@@ -486,6 +487,45 @@ export const branchNodeExecutor: NodeExecutor = {
   },
 };
 
+// ==================== 知识库节点执行器 ====================
+export const knowledgeNodeExecutor: NodeExecutor = {
+  async execute(
+    node: WorkflowNode,
+    context: WorkflowRunContext,
+  ): Promise<NodeExecutionResult> {
+    const startTime = Date.now();
+    const data = node.data as KnowledgeNodeData;
+    const result = createBaseResult(node, Status.RUNNING, startTime);
+
+    context.onNodeStatusChange?.(node.id, Status.RUNNING);
+    context.onLog?.(node.id, `🤖 开始调用知识库: ${data.knowledgeBaseName}`);
+
+    const res = await workflowRunService.executeKnowledgeNode({
+      runId: context.runId,
+      nodeId: node.id,
+      variables: context.variables,
+      nodeData: data,
+    });
+    res.logs?.forEach((log) => {
+      context.onLog?.(node.id, log);
+    });
+    const outputs = writeNodeOutputs(
+      data.label,
+      res.outputs,
+      context.variables,
+    );
+    context.onLog?.(node.id, `✅ 知识库响应: ${String(outputs.context ?? "")}`);
+    const endTime = Date.now();
+    return {
+      ...result,
+      status: Status.SUCCESS,
+      endTime,
+      duration: endTime - startTime,
+      outputs,
+      logs: result.logs,
+    };
+  },
+};
 // ==================== 执行器注册表 ====================
 
 /**
@@ -498,6 +538,7 @@ export const nodeExecutors: Record<NodeType, NodeExecutor> = {
   [NodeType.API]: apiNodeExecutor,
   [NodeType.CODE]: codeNodeExecutor,
   [NodeType.BRANCH]: branchNodeExecutor,
+  [NodeType.KNOWLEDGE]: knowledgeNodeExecutor,
 };
 
 /**

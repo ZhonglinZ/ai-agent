@@ -2,6 +2,7 @@ import {
   APINodeExecuteRequest,
   LLMNodeExecuteRequest,
   NodeExecuteData,
+  KnowledgeNodeExecuteRequest,
 } from "../types/workflowRun";
 import { http } from "./http";
 
@@ -26,6 +27,17 @@ export class WorkflowRunService {
       `${this.baseUrl}/api`,
       request,
       { silent: true },
+    );
+    return response.data;
+  }
+
+  async executeKnowledgeNode(
+    request: KnowledgeNodeExecuteRequest,
+  ): Promise<NodeExecuteData> {
+    const response = await http.post<NodeExecuteData>(
+      `${this.baseUrl}/knowledge`,
+      request,
+      { silent: true, timeout: 50_000 },
     );
     return response.data;
   }
