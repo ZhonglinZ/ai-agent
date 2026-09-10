@@ -16,6 +16,7 @@ export enum NodeType {
   API = "api",
   BRANCH = "branch",
   KNOWLEDGE = "knowledge",
+  LOOP = "loop",
   // ========== 后续扩展 ==========
   // HTTP_REQUEST = 'httpRequest',
   // CONDITION = 'condition',
@@ -292,6 +293,25 @@ export interface KnowledgeNodeData extends BaseNodeData {
   outputs: KnowledgeOutputVariable[];
 }
 
+export interface SubflowGraph {
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+}
+
+export interface LoopOutputVariable {
+  id: string;
+  name: string;
+  /** 引用当前 variables，如 {{改写.text}} */
+  value: string;
+}
+
+export interface LoopNodeData extends BaseNodeData {
+  maxIterations: number;
+  breakCondition?: string;
+  subflow: SubflowGraph;
+  outputs: LoopOutputVariable[];
+}
+
 /**
  * 所有节点数据的联合类型
  * 添加新节点时，需要在这里添加对应的数据类型
@@ -303,7 +323,8 @@ export type WorkflowNodeData =
   | LLMNodeData
   | APINodeData
   | BranchNodeData
-  | KnowledgeNodeData;
+  | KnowledgeNodeData
+  | LoopNodeData;
 
 /**
  * 工作流节点类型

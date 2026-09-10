@@ -181,6 +181,7 @@ export class WorkflowEngine {
     visited: Set<string>;
     queue: string[];
     nodeResults: NodeExecutionResult[];
+    emitWorkflowTerminalStatus: boolean;
     branchDecisions: Record<string, string | null>;
   }): Promise<WorkflowRunResult> {
     const {
@@ -193,6 +194,7 @@ export class WorkflowEngine {
       visited,
       queue,
       nodeResults,
+      emitWorkflowTerminalStatus,
       branchDecisions,
     } = params;
 
@@ -200,8 +202,15 @@ export class WorkflowEngine {
 
     while (queue.length > 0) {
       if (this.state.shouldStop) {
-        input.callbacks?.onLog?.("system", "⏹️ 工作流执行被手动停止");
-        input.callbacks?.onWorkflowStatusChange?.(WorkflowRunStatus.STOPPED);
+        input.callbacks?.onLog?.(
+          "system",
+          emitWorkflowTerminalStatus
+            ? "⏹️ 工作流执行被手动停止"
+            : "⏹️ 子图执行被手动停止",
+        );
+        if (emitWorkflowTerminalStatus) {
+          input.callbacks?.onWorkflowStatusChange?.(WorkflowRunStatus.STOPPED);
+        }
         return {
           runId,
           status: WorkflowRunStatus.STOPPED,
@@ -263,19 +272,35 @@ export class WorkflowEngine {
           branchDecisions,
         });
 
+        if (emitWorkflowTerminalStatus) {
+          input.callbacks?.onLog?.(
+            "system",
+            `⏸️ 工作流已暂停，可从断点继续（节点: ${currentNode.data.label}）`,
+          );
+          input.callbacks?.onWorkflowStatusChange?.(WorkflowRunStatus.PAUSED);
+          return {
+            runId,
+            status: WorkflowRunStatus.PAUSED,
+            startTime,
+            endTime: Date.now(),
+            nodeResults,
+            error: result.error,
+            checkpoint,
+          };
+        }
+
+        // 子图失败：不暂停整图、不写 checkpoint，交由外层（如循环节点）处理
         input.callbacks?.onLog?.(
           "system",
-          `⏸️ 工作流已暂停，可从断点继续（节点: ${currentNode.data.label}）`,
+          `❌ 子图节点 ${currentNode.data.label} 执行失败，交由外层处理`,
         );
-        input.callbacks?.onWorkflowStatusChange?.(WorkflowRunStatus.PAUSED);
         return {
           runId,
-          status: WorkflowRunStatus.PAUSED,
+          status: WorkflowRunStatus.FAILED,
           startTime,
           endTime: Date.now(),
           nodeResults,
           error: result.error,
-          checkpoint,
         };
       }
 
@@ -296,7 +321,10 @@ export class WorkflowEngine {
           nodes,
         );
       } else if (currentNode.type === NodeType.END) {
-        input.callbacks?.onLog?.("system", `🏁 到达结束节点，工作流执行完成`);
+        if (emitWorkflowTerminalStatus) {
+          input.callbacks?.onLog?.("system", `🏁 到达结束节点，工作流执行完成`);
+        }
+        // 子图 END：队列清空后再统一打「本轮子图结束」，避免重复日志
       } else {
         nextNodeIds = adjacencyList.get(currentNodeId) || [];
       }
@@ -312,12 +340,15 @@ export class WorkflowEngine {
     const endNodeResult = nodeResults.find((r) => r.nodeId === endNode?.id);
 
     const endTime = Date.now();
-    input.callbacks?.onLog?.(
-      "system",
-      `✅ 工作流执行成功，总耗时: ${endTime - startTime}ms`,
-    );
-    input.callbacks?.onWorkflowStatusChange?.(WorkflowRunStatus.SUCCESS);
-
+    if (emitWorkflowTerminalStatus) {
+      input.callbacks?.onLog?.(
+        "system",
+        `✅ 工作流执行成功，总耗时: ${endTime - startTime}ms`,
+      );
+      input.callbacks?.onWorkflowStatusChange?.(WorkflowRunStatus.SUCCESS);
+    } else {
+      input.callbacks?.onLog?.("system", `🏁 本轮子图结束`);
+    }
     return {
       runId,
       status: WorkflowRunStatus.SUCCESS,
@@ -326,6 +357,46 @@ export class WorkflowEngine {
       nodeResults,
       finalOutput: endNodeResult?.outputs,
     };
+  }
+
+  public async executeGraph(params: {
+    nodes: WorkflowNode[];
+    edges: Edge[];
+    context: WorkflowRunContext;
+    input: WorkflowRunInput;
+    emitWorkflowTerminalStatus: boolean;
+    nodeResults: NodeExecutionResult[];
+    runId: string;
+    startTime: number;
+  }): Promise<WorkflowRunResult> {
+    const {
+      nodes,
+      edges,
+      context,
+      input,
+      emitWorkflowTerminalStatus,
+      runId,
+      startTime,
+      nodeResults,
+    } = params;
+    const startNode = findStartNode(nodes);
+    if (!startNode) {
+      throw new Error("未找到开始节点");
+    }
+
+    return await this.runFromQueue({
+      runId,
+      startTime,
+      nodes,
+      edges,
+      input,
+      context,
+      visited: new Set(),
+      queue: [startNode.id],
+      nodeResults,
+      emitWorkflowTerminalStatus,
+      branchDecisions: {},
+    });
   }
 
   /**
@@ -353,22 +424,15 @@ export class WorkflowEngine {
     input.callbacks?.onLog?.("system", `🚀 开始执行工作流 (ID: ${runId})`);
 
     try {
-      const startNode = findStartNode(nodes);
-      if (!startNode) {
-        throw new Error("未找到开始节点");
-      }
-
-      return await this.runFromQueue({
-        runId,
-        startTime,
+      return await this.executeGraph({
         nodes,
         edges,
-        input,
         context,
-        visited: new Set(),
-        queue: [startNode.id],
+        input,
+        emitWorkflowTerminalStatus: true,
         nodeResults,
-        branchDecisions: {},
+        runId,
+        startTime,
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "未知错误";
@@ -456,6 +520,7 @@ export class WorkflowEngine {
         visited: new Set(checkpoint.visitedNodeIds),
         queue,
         nodeResults,
+        emitWorkflowTerminalStatus: true,
         branchDecisions: { ...(checkpoint.branchDecisions ?? {}) },
       });
     } catch (error) {
