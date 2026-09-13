@@ -21,7 +21,6 @@ import type {
   NodeExecutor,
   NodeExecutionResult,
   WorkflowRunContext,
-  NodeExecutionStatus,
 } from "./types";
 import { NodeExecutionStatus as Status } from "./types";
 import { workflowRunService } from "@/lib/services/workflowRun.service";
@@ -31,7 +30,8 @@ import {
   isRetryableError,
 } from "@/lib/services/retry";
 import { sleep } from "@/lib/utils";
-
+import { createBaseResult } from "./utils";
+import { loopNodeExecutor } from "./loopExecutor";
 // ==================== 工具函数 ====================
 function writeNodeOutputs(
   label: string,
@@ -73,24 +73,6 @@ function delay(ms: number): Promise<void> {
  */
 function randomDelay(min: number = 500, max: number = 1500): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-/**
- * 创建基础执行结果
- */
-function createBaseResult(
-  node: WorkflowNode,
-  status: NodeExecutionStatus,
-  startTime: number,
-): NodeExecutionResult {
-  return {
-    nodeId: node.id,
-    nodeType: node.type as NodeType,
-    nodeName: node.data.label,
-    status,
-    startTime,
-    logs: [],
-  };
 }
 
 // ==================== 开始节点执行器 ====================
@@ -539,6 +521,7 @@ export const nodeExecutors: Record<NodeType, NodeExecutor> = {
   [NodeType.CODE]: codeNodeExecutor,
   [NodeType.BRANCH]: branchNodeExecutor,
   [NodeType.KNOWLEDGE]: knowledgeNodeExecutor,
+  [NodeType.LOOP]: loopNodeExecutor,
 };
 
 /**

@@ -130,6 +130,12 @@ export interface WorkflowRunCallbacks {
   onNodeStatusChange?: (nodeId: string, status: NodeExecutionStatus) => void;
   /** 日志回调 */
   onLog?: (nodeId: string, message: string) => void;
+  /** 循环节点迭代进度（供运行面板展示） */
+  onIterationChange?: (
+    loopNodeId: string,
+    current: number,
+    max: number,
+  ) => void;
 }
 
 /**
@@ -145,6 +151,12 @@ export interface WorkflowRunContext {
   onNodeStatusChange?: (nodeId: string, status: NodeExecutionStatus) => void;
   /** 日志回调 */
   onLog?: (nodeId: string, message: string) => void;
+  /** 循环节点迭代进度 */
+  onIterationChange?: (
+    loopNodeId: string,
+    current: number,
+    max: number,
+  ) => void;
 }
 
 /**

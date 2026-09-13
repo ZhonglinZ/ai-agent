@@ -418,6 +418,7 @@ export class WorkflowEngine {
       variables: { ...input.variables },
       onNodeStatusChange: input.callbacks?.onNodeStatusChange,
       onLog: input.callbacks?.onLog,
+      onIterationChange: input.callbacks?.onIterationChange,
     };
 
     input.callbacks?.onWorkflowStatusChange?.(WorkflowRunStatus.RUNNING);
@@ -477,6 +478,7 @@ export class WorkflowEngine {
       variables: { ...checkpoint.variables },
       onNodeStatusChange: input.callbacks?.onNodeStatusChange,
       onLog: input.callbacks?.onLog,
+      onIterationChange: input.callbacks?.onIterationChange,
     };
 
     input.callbacks?.onWorkflowStatusChange?.(WorkflowRunStatus.RUNNING);
