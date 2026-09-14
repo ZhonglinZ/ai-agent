@@ -16,12 +16,18 @@ interface NodeSelectorProps {
 
 export const NodeSelector: React.FC<NodeSelectorProps> = ({ onSelect }) => {
   const startPlacingNode = useWorkflowStore((state) => state.startPlacingNode);
+  const canvasStack = useWorkflowStore((state) => state.canvasStack);
+  const inSubflow = canvasStack.length > 0;
 
-  // 获取所有可添加的节点（排除开始节点，因为只能有一个）
+  // 主图排除 START；子图再排除 LOOP / START（子图已有循环开始）
   const availableNodes = React.useMemo(() => {
     const allConfigs = nodeRegistry.getAll();
-    return allConfigs.filter((config) => config.type !== NodeType.START);
-  }, []);
+    return allConfigs.filter((config) => {
+      if (config.type === NodeType.START) return false;
+      if (inSubflow && config.type === NodeType.LOOP) return false;
+      return true;
+    });
+  }, [inSubflow]);
 
   const handleNodeClick = (type: NodeType) => {
     startPlacingNode(type);
@@ -38,7 +44,6 @@ export const NodeSelector: React.FC<NodeSelectorProps> = ({ onSelect }) => {
                        hover:bg-gray-50 transition-colors"
             onClick={() => handleNodeClick(config.type)}
           >
-            {/* 节点图标 */}
             <div
               className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100
                             flex items-center justify-center text-gray-600"
@@ -46,7 +51,6 @@ export const NodeSelector: React.FC<NodeSelectorProps> = ({ onSelect }) => {
               {config.icon}
             </div>
 
-            {/* 节点信息 */}
             <div className="flex-1 min-w-0">
               <div className="font-medium text-gray-900 text-sm">
                 {config.label}

@@ -5,3 +5,4 @@ export { CodeNode } from "./CodeNode";
 export { LLMNode, MODEL_OPTIONS } from "./LLMNode";
 export { BranchNode } from "./BranchNode";
 export { KnowledgeNode } from "./KnowledgeNode";
+export { LoopNode } from "./LoopNode";

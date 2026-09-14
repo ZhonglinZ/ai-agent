@@ -4,3 +4,4 @@ export { LLMPropertyPanel } from "./llmPanel";
 export { CodePropertyPanel } from "./codePanel";
 export { RunPanel } from "./RunPanel";
 export { PreviewPanel } from "./PreviewPanel";
+export { LoopPropertyPanel } from "./loopPanel";

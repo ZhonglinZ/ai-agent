@@ -22,6 +22,7 @@ import {
   CodeNode,
   LLMNode,
   KnowledgeNode,
+  LoopNode,
 } from "@/components/workflow/nodes";
 import {
   PreviewPanel,
@@ -32,7 +33,6 @@ import {
   CanvasToolbar,
   PlacingNodePreview,
 } from "@/components/workflow/toolbar";
-import { useStore } from "zustand";
 import { APINode } from "../nodes/APINode";
 import { BranchNode } from "../nodes/BranchNode";
 import { getValidPosition } from "@/lib/workflow/collisionAlgorithm";
@@ -40,6 +40,8 @@ import {
   selectRunningEdges,
   useWorkflowRunStore,
 } from "@/lib/stores/workflowRunStore";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { Button } from "antd";
 
 // 确保节点已注册
 initializeNodeRegistry();
@@ -53,6 +55,7 @@ const nodeTypes: NodeTypes = {
   [NodeType.API]: APINode,
   [NodeType.BRANCH]: BranchNode,
   [NodeType.KNOWLEDGE]: KnowledgeNode,
+  [NodeType.LOOP]: LoopNode,
 };
 /**
  * 画布内部组件
@@ -72,6 +75,8 @@ const CanvasContent: React.FC = () => {
     cancelPlacingNode,
     enableCollision,
     canvasStack,
+    enterSubflow,
+    exitSubflow,
   } = useWorkflowStore();
 
   // 获取 ReactFlow 实例，用于坐标转换
@@ -209,6 +214,16 @@ const CanvasContent: React.FC = () => {
     [setSelectedNodeId],
   );
 
+  // 双击循环节点进入子图
+  const handleNodeDoubleClick: NodeMouseHandler<WorkflowNode> = useCallback(
+    (_event, node) => {
+      if (node.type === NodeType.LOOP) {
+        enterSubflow(node.id);
+      }
+    },
+    [enterSubflow],
+  );
+
   // 处理画布点击（核心：放置节点）
   const handlePaneClick = useCallback(
     (event: React.MouseEvent) => {
@@ -286,6 +301,7 @@ const CanvasContent: React.FC = () => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         onPaneClick={handlePaneClick}
         nodeDragThreshold={1}
         fitView
@@ -309,6 +325,25 @@ const CanvasContent: React.FC = () => {
           showInteractive={false}
           className="hidden"
         />
+
+        {/* 子图编辑顶栏：返回主画布（不要和 EditorHeader 回列表混淆） */}
+        {canvasStack.length > 0 && (
+          <Panel position="top-left" className="m-3">
+            <div className="flex items-center gap-2 rounded-lg border border-orange-200 bg-white px-3 py-2 shadow-sm">
+              <Button
+                type="text"
+                size="small"
+                icon={<ArrowLeftOutlined />}
+                onClick={exitSubflow}
+              >
+                返回主画布
+              </Button>
+              <span className="text-xs text-gray-500">
+                正在编辑循环体（撤销仅作用于当前子图）
+              </span>
+            </div>
+          </Panel>
+        )}
 
         {/* 右侧属性面板 */}
         <Panel position="top-right" className="m-0 p-0">

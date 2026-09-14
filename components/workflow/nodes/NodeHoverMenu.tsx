@@ -13,9 +13,12 @@ import {
   BranchesOutlined,
   CodeOutlined,
   ApiOutlined,
+  BookOutlined,
+  RetweetOutlined,
 } from "@ant-design/icons";
 import { nodeRegistry } from "@/lib/workflow/nodeRegistry";
 import { NodeType } from "@/lib/workflow/types";
+import { useWorkflowStore } from "@/lib/stores/workflowStore";
 
 interface NodeHoverMenuProps {
   /** 源节点 ID */
@@ -33,12 +36,12 @@ const nodeCategories = [
   {
     key: "basic",
     label: "基础",
-    types: [NodeType.LLM, NodeType.END],
+    types: [NodeType.LLM, NodeType.KNOWLEDGE, NodeType.END],
   },
   {
     key: "logic",
     label: "逻辑",
-    types: [NodeType.BRANCH],
+    types: [NodeType.BRANCH, NodeType.LOOP],
   },
   {
     key: "tools",
@@ -51,12 +54,14 @@ const nodeCategories = [
  * 节点图标映射
  */
 const nodeIcons: Record<NodeType, React.ReactNode> = {
-  [NodeType.START]: null, // 开始节点不显示
+  [NodeType.START]: null,
   [NodeType.END]: <StopOutlined className="text-red-500" />,
   [NodeType.LLM]: <RobotOutlined className="text-blue-500" />,
   [NodeType.CODE]: <CodeOutlined className="text-orange-500" />,
   [NodeType.API]: <ApiOutlined className="text-green-500" />,
   [NodeType.BRANCH]: <BranchesOutlined className="text-yellow-600" />,
+  [NodeType.KNOWLEDGE]: <BookOutlined className="text-purple-500" />,
+  [NodeType.LOOP]: <RetweetOutlined className="text-orange-500" />,
 };
 
 /**
@@ -69,23 +74,28 @@ const nodeLabels: Record<NodeType, string> = {
   [NodeType.CODE]: "代码",
   [NodeType.API]: "API",
   [NodeType.BRANCH]: "分支器",
+  [NodeType.KNOWLEDGE]: "知识库",
+  [NodeType.LOOP]: "循环",
 };
 
 /**
  * 节点快速选择器
  */
 export const NodeHoverMenu: React.FC<NodeHoverMenuProps> = ({
-  sourceNodeId,
   onSelect,
   onClose,
 }) => {
-  // 获取所有可添加的节点（排除开始节点）
+  const canvasStack = useWorkflowStore((state) => state.canvasStack);
+  const inSubflow = canvasStack.length > 0;
+
+  // 获取所有可添加的节点（排除开始节点；子图内再排除循环）
   const availableCategories = useMemo(() => {
     return nodeCategories
       .map((category) => ({
         ...category,
         nodes: category.types
           .filter((type) => nodeRegistry.has(type))
+          .filter((type) => !(inSubflow && type === NodeType.LOOP))
           .map((type) => ({
             type,
             icon: nodeIcons[type],
@@ -93,18 +103,16 @@ export const NodeHoverMenu: React.FC<NodeHoverMenuProps> = ({
           })),
       }))
       .filter((category) => category.nodes.length > 0);
-  }, []);
+  }, [inSubflow]);
 
   return (
     <div className="w-40 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden py-2">
-      {availableCategories.map((category, categoryIndex) => (
+      {availableCategories.map((category) => (
         <div key={category.key}>
-          {/* 分类标题 */}
           <div className="px-3 py-1 text-xs text-gray-400 font-medium">
             {category.label}
           </div>
 
-          {/* 节点列表 */}
           {category.nodes.map((node) => (
             <div
               key={node.type}

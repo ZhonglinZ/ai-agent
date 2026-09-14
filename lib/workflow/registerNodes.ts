@@ -5,6 +5,7 @@ import {
   BranchesOutlined,
   CodeOutlined,
   PlayCircleOutlined,
+  RetweetOutlined,
   RobotOutlined,
   StopOutlined,
 } from "@ant-design/icons";
@@ -18,16 +19,18 @@ import type {
   APINodeData,
   BranchNodeData,
   KnowledgeNodeData,
+  LoopNodeData,
 } from "./types";
 import { StartNode } from "@/components/workflow/nodes/StartNode";
 import { EndNode } from "@/components/workflow/nodes/EndNode";
 import { CodeNode } from "@/components/workflow/nodes/CodeNode";
 import { StartPropertyPanel } from "@/components/workflow/panels/StartNodePropertyPanel";
 import { EndPropertyPanel } from "@/components/workflow/panels/EndNodePropertyPanel";
-import { LLMNode } from "@/components/workflow/nodes";
+import { LLMNode, LoopNode } from "@/components/workflow/nodes";
 import {
   CodePropertyPanel,
   LLMPropertyPanel,
+  LoopPropertyPanel,
 } from "@/components/workflow/panels";
 import { APINode } from "@/components/workflow/nodes/APINode";
 import { APIPropertyPanel } from "@/components/workflow/panels/apiPanel";
@@ -237,6 +240,27 @@ def main(arg1: str, arg2: str) -> dict:
           description: "命中切片列表",
         },
       ],
+    },
+  });
+
+  // ==================== 注册循环节点 ====================
+  nodeRegistry.register<LoopNodeData>({
+    type: NodeType.LOOP,
+    label: "循环",
+    description: "重复执行内部子工作流，支持最大次数与提前退出",
+    icon: React.createElement(RetweetOutlined),
+    iconColor: "orange",
+    category: "logic",
+    component: LoopNode,
+    propertyPanel: LoopPropertyPanel,
+    maxInputs: 1,
+    maxOutputs: 1,
+    defaultData: {
+      label: "循环",
+      maxIterations: 5,
+      breakCondition: "",
+      subflow: { nodes: [], edges: [] },
+      outputs: [{ id: "out_text", name: "text", value: "" }],
     },
   });
 }
