@@ -71,19 +71,20 @@ const CanvasContent: React.FC = () => {
     addNode,
     cancelPlacingNode,
     enableCollision,
+    canvasStack,
   } = useWorkflowStore();
 
   // 获取 ReactFlow 实例，用于坐标转换
   const reactFlowInstance = useReactFlow();
-  const temporal = useWorkflowStore.temporal.getState();
   // 记录最新坐标
   const dragRef = React.useRef<{
     id: string;
     lastValidPosition: { x: number; y: number };
   } | null>(null);
 
-  // 初始化默认节点
+  // 初始化默认节点（仅主图；子图由 enterSubflow 种 Start/End）
   useEffect(() => {
+    if (canvasStack.length > 0) return;
     if (nodes.length > 0) return;
 
     const initialNodes: WorkflowNode[] = [
@@ -102,8 +103,8 @@ const CanvasContent: React.FC = () => {
     ];
 
     setNodes(initialNodes);
-    temporal.clear();
-  }, [nodes.length, setNodes]);
+    useWorkflowStore.temporal.getState().clear();
+  }, [canvasStack.length, nodes.length, setNodes]);
 
   // 4. 实现拦截器：彻底屏蔽 React Flow 的默认位置更新
   const onNodesChangeIntercepted = useCallback(

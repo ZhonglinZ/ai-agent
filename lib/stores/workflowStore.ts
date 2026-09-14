@@ -13,14 +13,21 @@ import type {
   WorkflowNode,
   WorkflowEdge,
   WorkflowNodeData,
+  SubflowGraph,
 } from "@/lib/workflow/types";
 import { NodeType } from "@/lib/workflow/types";
 import { nodeRegistry } from "@/lib/workflow/nodeRegistry";
 import { workflowService } from "../services/workflow.service";
+import { createEmptySubflow } from "../workflow/createEmptySubflow";
 /**
  * 工作流编辑器状态接口
  * 管理工作流的基本信息、画布节点和编辑状态
  */
+interface CanvasFrame {
+  loopNodeId: string;
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+}
 interface WorkflowState {
   // ==================== 基础数据 ====================
   /** 当前工作流数据 */
@@ -74,6 +81,18 @@ interface WorkflowState {
   saveWorkflow: () => Promise<boolean>;
   /** 从本地存储加载工作流画布数据 */
   loadWorkflowData: (workflowId: string) => Promise<boolean>;
+
+  // ==================== 画布子图 Actions ====================
+  canvasStack: CanvasFrame[]; // [] = 正在看主图
+  enterSubflow: (loopNodeId: string) => void;
+  exitSubflow: () => void;
+  /** 静默把当前子图写回根图并返回根 nodes/edges；不切换当前画面 */
+  flushSubflowToRoot: () =>
+    | {
+        nodes: WorkflowNode[];
+        edges: WorkflowEdge[];
+      }
+    | undefined;
 }
 
 /**
@@ -88,6 +107,7 @@ const initialState = {
   selectedNodeId: null,
   placingNodeType: null as NodeType | null,
   enableCollision: true,
+  canvasStack: [] as CanvasFrame[],
 };
 
 /**
@@ -217,8 +237,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       // ==================== 工作流 Actions ====================
       saveWorkflow: async () => {
-        const state = useWorkflowStore.getState();
-        const { workflow, nodes, edges } = state;
+        const { workflow, flushSubflowToRoot } = useWorkflowStore.getState();
 
         if (!workflow?.id) {
           console.error("无法保存：工作流 ID 不存在");
@@ -226,6 +245,11 @@ export const useWorkflowStore = create<WorkflowState>()(
         }
 
         try {
+          // 人可能还在子图里：先静默写回，再存根图
+          const { nodes, edges } = flushSubflowToRoot() || {
+            nodes: [],
+            edges: [],
+          };
           await workflowService.saveWorkflow(
             workflow.id,
             workflow.name,
@@ -249,6 +273,7 @@ export const useWorkflowStore = create<WorkflowState>()(
             set({
               nodes: data.nodes,
               edges: data.edges || [],
+              canvasStack: [],
             });
             return true;
           }
@@ -258,6 +283,98 @@ export const useWorkflowStore = create<WorkflowState>()(
           console.error("加载工作流数据失败:", error);
           return false;
         }
+      },
+
+      // ==================== 画布子图 Actions ====================
+      enterSubflow: (loopNodeId) => {
+        const state = useWorkflowStore.getState();
+        const { nodes, edges, canvasStack } = state;
+        const loopNode = nodes.find((node) => node.id === loopNodeId);
+        if (!loopNode || loopNode.type !== NodeType.LOOP) {
+          console.error("循环节点不存在或不是循环节点");
+          return;
+        }
+        const nodeSubflow = loopNode.data.subflow as SubflowGraph | undefined;
+        const subflow = nodeSubflow?.nodes?.length
+          ? nodeSubflow
+          : createEmptySubflow();
+
+        set({
+          canvasStack: [...canvasStack, { loopNodeId, nodes, edges }],
+          nodes: subflow.nodes,
+          edges: subflow.edges,
+          selectedNodeId: null,
+        });
+
+        useWorkflowStore.temporal.getState().clear();
+      },
+
+      exitSubflow: () => {
+        const state = useWorkflowStore.getState();
+        const frame = state.canvasStack.at(-1);
+        if (!frame) {
+          return;
+        }
+
+        // 当前画面是子图，写回父快照里对应的循环节点
+        const subflow: SubflowGraph = {
+          nodes: state.nodes,
+          edges: state.edges,
+        };
+        const parentNodes = frame.nodes.map((n) =>
+          n.id === frame.loopNodeId
+            ? {
+                ...n,
+                data: { ...n.data, subflow } as WorkflowNodeData,
+              }
+            : n,
+        );
+
+        set({
+          canvasStack: state.canvasStack.slice(0, -1),
+          nodes: parentNodes,
+          edges: frame.edges,
+          selectedNodeId: frame.loopNodeId,
+          isDirty: true,
+        });
+        useWorkflowStore.temporal.getState().clear();
+      },
+
+      flushSubflowToRoot: ():
+        | { nodes: WorkflowNode[]; edges: WorkflowEdge[] }
+        | undefined => {
+        const state = useWorkflowStore.getState();
+
+        // 已在主图：当前就是根图
+        if (state.canvasStack.length === 0) {
+          return { nodes: state.nodes, edges: state.edges };
+        }
+
+        // 从内往外写回；不切换当前画面
+        let childNodes = state.nodes;
+        let childEdges = state.edges;
+        const newStack = state.canvasStack.map((frame) => ({ ...frame }));
+
+        for (let i = newStack.length - 1; i >= 0; i--) {
+          const frame = newStack[i];
+          const parentNodes = frame.nodes.map((n) =>
+            n.id === frame.loopNodeId
+              ? {
+                  ...n,
+                  data: {
+                    ...n.data,
+                    subflow: { nodes: childNodes, edges: childEdges },
+                  } as WorkflowNodeData,
+                }
+              : n,
+          );
+          newStack[i] = { ...frame, nodes: parentNodes };
+          childNodes = parentNodes;
+          childEdges = frame.edges;
+        }
+
+        set({ canvasStack: newStack });
+        return { nodes: childNodes, edges: childEdges };
       },
     }),
     {
