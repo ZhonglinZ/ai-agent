@@ -23,6 +23,8 @@ import {
   validateWorkflowForRun,
   type ValidationResult,
 } from "@/lib/workflow/validator";
+import { useWorkflowStore } from "@/lib/stores/workflowStore";
+import type { WorkflowNodeData } from "@/lib/workflow/types";
 
 /**
  * 日志条目
@@ -33,6 +35,8 @@ export interface LogEntry {
   message: string;
   timestamp: number;
   type: "info" | "success" | "error" | "warning";
+  loopNodeId?: string;
+  iteration?: number;
 }
 
 /**
@@ -78,6 +82,9 @@ export interface WorkflowRunState {
 
   // 检查点
   lastCheckpoint: WorkflowRunCheckpoint | null;
+
+  // 循环进度
+  loopProgress: Record<string, { current: number; max: number }>;
 }
 
 /**
@@ -110,7 +117,11 @@ export interface WorkflowRunActions {
   // 内部使用：更新状态
   setWorkflowStatus: (status: WorkflowRunStatus) => void;
   setNodeStatus: (nodeId: string, status: NodeExecutionStatus) => void;
-  addLog: (nodeId: string, message: string) => void;
+  addLog: (
+    nodeId: string,
+    message: string,
+    meta?: { loopNodeId: string; iteration: number },
+  ) => void;
   clearLogs: () => void;
 
   // 设置正在运行的边
@@ -127,6 +138,12 @@ export interface WorkflowRunActions {
     nodes: WorkflowNode[],
     edges: Edge[],
   ) => Promise<WorkflowRunResult | null>;
+
+  // 获取主图节点
+  getRootNodes: () => WorkflowNode[];
+
+  // 清空循环进度
+  clearLoopProgress: () => void;
 }
 
 export type WorkflowRunStore = WorkflowRunState & WorkflowRunActions;
@@ -149,6 +166,7 @@ const initialState: WorkflowRunState = {
   runningEdges: [],
   isPreviewPanelOpen: false,
   lastCheckpoint: null,
+  loopProgress: {},
 };
 
 /**
@@ -156,6 +174,16 @@ const initialState: WorkflowRunState = {
  */
 function generateLogId(): string {
   return `log_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+}
+
+/** 当前进行中的循环（MVP 只取最近一次更新的那一个） */
+function getActiveLoop(
+  loopProgress: Record<string, { current: number; max: number }>,
+): { loopNodeId: string; iteration: number } | undefined {
+  const entries = Object.entries(loopProgress);
+  if (entries.length === 0) return undefined;
+  const [loopNodeId, progress] = entries[entries.length - 1];
+  return { loopNodeId, iteration: progress.current };
 }
 
 /**
@@ -205,6 +233,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
       validationResult: null,
       runningEdges: [],
       lastCheckpoint: null,
+      loopProgress: {},
     });
 
     // 初始化所有节点为待执行状态
@@ -261,7 +290,15 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
           }
         },
         onLog: (nodeId: string, message: string) => {
-          get().addLog(nodeId, message);
+          get().addLog(nodeId, message, getActiveLoop(get().loopProgress));
+        },
+        onIterationChange: (loopNodeId, current, max) => {
+          set((s) => ({
+            loopProgress: {
+              ...s.loopProgress,
+              [loopNodeId]: { current, max },
+            },
+          }));
         },
       },
     });
@@ -365,7 +402,15 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
           }
         },
         onLog: (nodeId, message) => {
-          get().addLog(nodeId, message);
+          get().addLog(nodeId, message, getActiveLoop(get().loopProgress));
+        },
+        onIterationChange: (loopNodeId, current, max) => {
+          set((s) => ({
+            loopProgress: {
+              ...s.loopProgress,
+              [loopNodeId]: { current, max },
+            },
+          }));
         },
       },
     });
@@ -395,6 +440,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
       startTime: null,
       endTime: null,
       lastCheckpoint: null,
+      loopProgress: {},
     });
   },
 
@@ -442,18 +488,23 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
   },
 
   // 添加日志
-  addLog: (nodeId, message) => {
+  addLog: (nodeId, message, meta) => {
+    const prefixed = meta
+      ? `[第 ${meta.iteration} 次] ${message}`
+      : message;
     const logEntry: LogEntry = {
       id: generateLogId(),
       nodeId,
-      message,
+      message: prefixed,
       timestamp: Date.now(),
+      loopNodeId: meta?.loopNodeId,
+      iteration: meta?.iteration,
       type:
-        message.includes("❌") || message.includes("错误")
+        prefixed.includes("❌") || prefixed.includes("错误")
           ? "error"
-          : message.includes("✅") || message.includes("完成")
+          : prefixed.includes("✅") || prefixed.includes("完成")
             ? "success"
-            : message.includes("⚠️")
+            : prefixed.includes("⚠️")
               ? "warning"
               : "info",
     };
@@ -492,6 +543,36 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => ({
 
   closePreviewPanel: () => {
     set({ isPreviewPanelOpen: false });
+  },
+
+  // 获取主图节点（只读，不切换当前画布）
+  getRootNodes: () => {
+    const { nodes, edges, canvasStack } = useWorkflowStore.getState();
+    if (canvasStack.length === 0) return nodes;
+
+    let childNodes = nodes;
+    let childEdges = edges;
+    for (let i = canvasStack.length - 1; i >= 0; i--) {
+      const frame = canvasStack[i];
+      childNodes = frame.nodes.map((n) =>
+        n.id === frame.loopNodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                subflow: { nodes: childNodes, edges: childEdges },
+              } as WorkflowNodeData,
+            }
+          : n,
+      );
+      childEdges = frame.edges;
+    }
+    return childNodes;
+  },
+
+  // 清空循环进度
+  clearLoopProgress: () => {
+    set({ loopProgress: {} });
   },
 }));
 

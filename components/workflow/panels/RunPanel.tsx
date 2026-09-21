@@ -23,6 +23,7 @@ import {
   NodeExecutionStatus,
   WorkflowRunStatus,
 } from "@/lib/workflow/engine/types";
+import { NodeType } from "@/lib/workflow/types";
 
 /**
  * 格式化时间戳
@@ -92,8 +93,11 @@ export const RunPanel: React.FC = () => {
   const logsEndRef = useRef<HTMLDivElement>(null);
   const [duration, setDuration] = useState(0); // 运行时长使用本地状态
 
-  const nodes = useWorkflowStore((state) => state.nodes);
-  const edges = useWorkflowStore((state) => state.edges);
+  const canvasStack = useWorkflowStore((state) => state.canvasStack);
+  const viewNodes = useWorkflowStore((state) => state.nodes);
+  const getRootNodes = useWorkflowRunStore((state) => state.getRootNodes);
+  // 节点列表始终展示根图，避免人钻在子图里时只剩内部节点
+  const nodes = canvasStack.length === 0 ? viewNodes : getRootNodes();
 
   const status = useWorkflowRunStore((state) => state.status);
   const isRunning = useWorkflowRunStore(selectIsRunning);
@@ -102,6 +106,7 @@ export const RunPanel: React.FC = () => {
   const logs = useWorkflowRunStore(selectLogs);
   const startTime = useWorkflowRunStore((state) => state.startTime);
   const endTime = useWorkflowRunStore((state) => state.endTime);
+  const loopProgress = useWorkflowRunStore((state) => state.loopProgress);
 
   const lastCheckpoint = useWorkflowRunStore((state) => state.lastCheckpoint);
   const startRun = useWorkflowRunStore((state) => state.startRun);
@@ -118,6 +123,18 @@ export const RunPanel: React.FC = () => {
       logsEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [logs]);
+
+  const handleRun = () => {
+    const root = useWorkflowStore.getState().flushSubflowToRoot();
+    if (!root) return;
+    startRun(root.nodes, root.edges);
+  };
+
+  const handleResume = () => {
+    const root = useWorkflowStore.getState().flushSubflowToRoot();
+    if (!root) return;
+    resumeRun(root.nodes, root.edges);
+  };
 
   // 更新运行时长（使用定时器避免无限循环）
   useEffect(() => {
@@ -174,6 +191,12 @@ export const RunPanel: React.FC = () => {
               <div className="flex items-center gap-2">
                 {getStatusIcon(nodeStatus)}
                 <span className="text-sm text-gray-700">{node.data.label}</span>
+                {node.type === NodeType.LOOP && loopProgress[node.id] && (
+                  <span className="text-xs text-orange-600">
+                    第 {loopProgress[node.id].current}/
+                    {loopProgress[node.id].max} 次
+                  </span>
+                )}
               </div>
               {nodeResult?.duration && (
                 <span className="text-xs text-gray-400">
@@ -257,11 +280,11 @@ export const RunPanel: React.FC = () => {
           </Button>
         ) : canResume ? (
           <>
-            <Button onClick={() => startRun(nodes, edges)}>重新运行</Button>
+            <Button onClick={handleRun}>重新运行</Button>
             <Button
               type="primary"
               icon={<ReloadOutlined />}
-              onClick={() => resumeRun(nodes, edges)}
+              onClick={handleResume}
             >
               从断点继续
             </Button>
@@ -270,7 +293,7 @@ export const RunPanel: React.FC = () => {
           <Button
             type="primary"
             icon={<PlayCircleOutlined />}
-            onClick={() => startRun(nodes, edges)}
+            onClick={handleRun}
           >
             运行
           </Button>

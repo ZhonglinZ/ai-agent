@@ -54,8 +54,9 @@ export const loopNodeExecutor: NodeExecutor = {
 
     for (let i = 1; i <= max; i++) {
       context.variables[`${data.label}.index`] = i;
-      context.onLog?.(node.id, `🔁 第 ${i}/${max} 次迭代开始`);
+      // 先通知进度，再打日志，运行面板才能给本轮日志打上迭代前缀
       context.onIterationChange?.(node.id, i, max);
+      context.onLog?.(node.id, `🔁 第 ${i}/${max} 次迭代开始`);
 
       let child;
       try {
