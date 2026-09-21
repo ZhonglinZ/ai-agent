@@ -19,6 +19,7 @@ import {
   type StartNodeData,
   type LLMNodeData,
   type CodeNodeData,
+  type LoopNodeData,
 } from "./types";
 
 // ==================== 类型定义 ====================
@@ -156,6 +157,29 @@ export function extractNodeOutputs(
         type: output.type,
         description: output.description,
       }));
+    }
+
+    case NodeType.LOOP: {
+      const loopData = data as LoopNodeData;
+      const outputs = (loopData.outputs || [])
+        .filter((output) => output.name?.trim())
+        .map((output) => ({
+          id: output.id,
+          name: output.name,
+          type: "string",
+          description: output.value
+            ? `循环输出，取值 ${output.value}`
+            : "循环输出",
+        }));
+      return [
+        {
+          id: `${node.id}-index`,
+          name: "index",
+          type: "number",
+          description: "当前迭代次数（从 1 开始）",
+        },
+        ...outputs,
+      ];
     }
 
     default:

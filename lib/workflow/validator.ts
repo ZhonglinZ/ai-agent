@@ -4,6 +4,7 @@ import {
   CodeNodeData,
   EndNodeData,
   LLMNodeData,
+  LoopNodeData,
   NodeType,
   WorkflowEdge,
   WorkflowNode,
@@ -157,6 +158,70 @@ function validateBranchNode(node: WorkflowNode, edges: WorkflowEdge[]): Validati
 }
 
 /**
+ * 验证循环节点（画布级：是否连入主流程）
+ */
+function validateLoopNode(node: WorkflowNode, edges: WorkflowEdge[]): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  if (!hasInputConnection(node.id, edges)) {
+    issues.push(createIssue(node, "此节点尚未连接到其他节点", "missing_connection"));
+  }
+
+  return issues;
+}
+
+/**
+ * 校验循环子图。递归复用运行前结构校验，并把报错归到该循环节点上。
+ */
+function validateLoopSubflow(node: WorkflowNode): ValidationIssue[] {
+  const data = node.data as LoopNodeData;
+  const label = data.label || "循环";
+  const prefix = `[循环: ${label}] `;
+  const issues: ValidationIssue[] = [];
+
+  if (!Number.isFinite(data.maxIterations) || data.maxIterations < 1) {
+    issues.push(
+      createIssue(node, `${prefix}最大迭代次数必须大于等于 1`, "invalid_value"),
+    );
+  }
+
+  const subNodes = data.subflow?.nodes ?? [];
+  const subEdges = data.subflow?.edges ?? [];
+
+  if (subNodes.length === 0) {
+    issues.push(
+      createIssue(
+        node,
+        `${prefix}子工作流为空，请双击进入并配置`,
+        "structure_error",
+      ),
+    );
+    return issues;
+  }
+
+  for (const child of subNodes) {
+    if (child.type === NodeType.LOOP) {
+      issues.push(
+        createIssue(child, `${prefix}暂不支持嵌套循环`, "structure_error"),
+      );
+    }
+  }
+
+  const childResult = validateWorkflowForRun(subNodes, subEdges);
+  for (const issue of childResult.issues) {
+    issues.push({
+      ...issue,
+      message: `${prefix}${issue.message}`,
+      nodeId: issue.nodeId || node.id,
+      nodeLabel: issue.nodeLabel || label,
+      nodeType: issue.nodeType || NodeType.LOOP,
+    });
+  }
+
+  return issues;
+}
+
+/**
  * 验证整个工作流
  */
 export function validateWorkflowNodes(
@@ -181,6 +246,9 @@ export function validateWorkflowNodes(
         break;
       case NodeType.BRANCH:
         issues.push(...validateBranchNode(node, edges));
+        break;
+      case NodeType.LOOP:
+        issues.push(...validateLoopNode(node, edges));
         break;
       default:
         break;
@@ -327,6 +395,13 @@ export function validateWorkflowForRun(
   // 7. 执行常规验证（字段检查等）
   const regularValidation = validateWorkflowNodes(nodes, edges);
   issues.push(...regularValidation.issues);
+
+  // 8. 循环节点：校验子图结构（空子图 / 缺 Start·End / 嵌套循环）
+  for (const node of nodes) {
+    if (node.type === NodeType.LOOP) {
+      issues.push(...validateLoopSubflow(node));
+    }
+  }
 
   return {
     isValid: issues.length === 0,
