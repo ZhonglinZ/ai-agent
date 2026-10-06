@@ -127,6 +127,7 @@ def main(arg1: str, arg2: str) -> dict:
       topP: 0.8, // 默认 Top P 值
       context: "", // 上下文变量
       prompt: "", // 提示词
+      responseFormat: "text",
       outputs: [
         // 默认输出变量
         {

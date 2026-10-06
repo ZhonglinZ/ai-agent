@@ -62,7 +62,16 @@ export const LLMNode: React.FC<LLMNodeProps> = ({ id, data, selected }) => {
         </div>
 
         {/* 标题 */}
-        <div className="font-medium text-sm text-gray-800">{data.label}</div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="font-medium text-sm text-gray-800 truncate">
+            {data.label}
+          </div>
+          {(data.responseFormat ?? "text") === "json" && (
+            <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100">
+              JSON
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 模型信息区域 */}

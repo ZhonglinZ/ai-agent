@@ -178,6 +178,11 @@ export interface LLMNodeData extends BaseNodeData {
   context?: string;
   /** 提示词 */
   prompt?: string;
+  /**
+   * 响应格式：text 原样写入输出；json 从模型文本中解析 JSON，
+   * 再按 outputs[].name 映射字段（面试 Agent Loop 用）
+   */
+  responseFormat?: "text" | "json";
   /** 输出变量列表 */
   outputs: LLMOutputVariable[];
 }

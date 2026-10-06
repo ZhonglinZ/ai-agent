@@ -14,6 +14,26 @@ type PreviewMessage = {
   content: string;
 };
 
+/** 预览回复展示：JSON 模式展示映射字段，text 模式展示文本 */
+function formatLlmPreviewOutputs(
+  outputs: Record<string, unknown>,
+  responseFormat?: "text" | "json",
+): string {
+  if (responseFormat === "json") {
+    const { raw: _raw, text: _text, ...fields } = outputs;
+    if (Object.keys(fields).length > 0) {
+      return JSON.stringify(fields, null, 2);
+    }
+    if (typeof outputs.raw === "string") return outputs.raw;
+    return JSON.stringify(outputs, null, 2);
+  }
+
+  const text =
+    (outputs.text as string) ??
+    Object.values(outputs).find((v) => typeof v === "string");
+  return text != null ? String(text) : JSON.stringify(outputs);
+}
+
 /**
  * 从开始节点收集默认变量（静默注入，不弹表单）
  */
@@ -137,17 +157,17 @@ export const PreviewPanel: React.FC = () => {
         nodeData: previewNodeData,
       });
 
-      const text =
-        (result.outputs.text as string) ??
-        Object.values(result.outputs).find((v) => typeof v === "string") ??
-        JSON.stringify(result.outputs);
+      const text = formatLlmPreviewOutputs(
+        result.outputs,
+        llmData.responseFormat,
+      );
 
       setMessages((prev) => [
         ...prev,
         {
           id: `assistant_${Date.now()}`,
           role: "assistant",
-          content: String(text),
+          content: text,
         },
       ]);
     } catch (err) {
@@ -186,6 +206,9 @@ export const PreviewPanel: React.FC = () => {
             <Tag color="blue">调试: {llmData?.label || "大模型"}</Tag>
           ) : (
             <Tag color="default">未找到大模型节点</Tag>
+          )}
+          {llmData?.responseFormat === "json" && (
+            <Tag color="geekblue">JSON 解析</Tag>
           )}
         </div>
         {startDefaultsHint && (

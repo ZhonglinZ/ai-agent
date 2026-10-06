@@ -11,7 +11,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Input, Tooltip, Divider, Modal } from "antd";
+import { Input, Tooltip, Divider, Modal, Switch } from "antd";
 import {
   QuestionCircleOutlined,
   StarOutlined,
@@ -19,12 +19,7 @@ import {
 } from "@ant-design/icons";
 import { useWorkflowStore } from "@/lib/stores/workflowStore";
 import { MODEL_OPTIONS } from "@/components/workflow/nodes/LLMNode";
-import type {
-  PropertyPanelProps,
-  LLMNodeData,
-  StartNodeData,
-} from "@/lib/workflow/types";
-import { NodeType } from "@/lib/workflow/types";
+import type { PropertyPanelProps, LLMNodeData } from "@/lib/workflow/types";
 import { ModelParamsPanel } from "./ModalParamsPanel";
 import { VariableSelector } from "./VariableSelector";
 import { getAvailableVariables } from "@/lib/workflow/variableUtils";
@@ -203,6 +198,33 @@ export const LLMPropertyPanel: React.FC<PropertyPanelProps<LLMNodeData>> = ({
           onChange={(e) => handleChange("prompt", e.target.value)}
           className="resize-none"
         />
+      </div>
+
+      <Divider className="my-3" />
+
+      {/* 结构化输出：Prompt + JSON 解析 */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <label className="text-sm font-medium text-gray-700">
+              解析为 JSON
+            </label>
+            <Tooltip title="开启后要求模型只返回 JSON；按下方输出变量名从 JSON 中取值，供分支节点引用（如 nextAction / shouldStop）">
+              <QuestionCircleOutlined className="text-gray-400 text-xs cursor-help" />
+            </Tooltip>
+          </div>
+          <Switch
+            checked={(data.responseFormat ?? "text") === "json"}
+            onChange={(checked) =>
+              handleChange("responseFormat", checked ? "json" : "text")
+            }
+          />
+        </div>
+        {(data.responseFormat ?? "text") === "json" && (
+          <p className="text-xs text-gray-500 m-0">
+            输出变量名需与 JSON 字段一致。另会保留 raw / text 为原始响应。
+          </p>
+        )}
       </div>
 
       <Divider className="my-3" />

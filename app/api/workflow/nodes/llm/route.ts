@@ -1,4 +1,9 @@
 import { runLLM } from "@/lib/ai/llmRunner";
+import {
+  extractJsonObject,
+  mapJsonToLlmOutputs,
+  mapTextToLlmOutputs,
+} from "@/lib/services/llmJsonOutput";
 import { resolveVariables } from "@/lib/services/variableResolver";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -23,34 +28,53 @@ export async function POST(request: NextRequest) {
       topP: nodeData.topPEnabled ? nodeData.topP : undefined,
     });
 
-    const outputs: Record<string, unknown> = {};
+    const responseFormat = nodeData.responseFormat ?? "text";
+    const logs: string[] = [
+      `模型 ${nodeData.model || "qwen-plus"} 调用成功`,
+    ];
 
-    if (nodeData.outputs?.length) {
-      for (const output of nodeData.outputs) {
-        if (output.type === "object") {
-          outputs[output.name] = {
-            text: llmResult.text,
-            model: nodeData.model,
-          };
-        } else if (output.type === "array") {
-          outputs[output.name] = [llmResult.text];
-        } else {
-          outputs[output.name] = llmResult.text;
+    if (responseFormat === "json") {
+      try {
+        const parsed = extractJsonObject(llmResult.text);
+        const { outputs, missingFields } = mapJsonToLlmOutputs(
+          parsed,
+          nodeData.outputs,
+          llmResult.text,
+        );
+        if (missingFields.length > 0) {
+          logs.push(`⚠️ JSON 缺少字段: ${missingFields.join(", ")}`);
         }
+        logs.push("📦 已按 JSON 映射输出字段");
+        return NextResponse.json({
+          success: true,
+          data: { outputs, logs },
+        });
+      } catch (parseError) {
+        const message =
+          parseError instanceof Error
+            ? parseError.message
+            : "JSON 解析失败";
+        return NextResponse.json(
+          { success: false, message: `结构化输出校验失败: ${message}` },
+          { status: 400 },
+        );
       }
-    } else {
-      outputs.text = llmResult.text;
     }
+
+    const outputs = mapTextToLlmOutputs(
+      llmResult.text,
+      nodeData.outputs,
+      nodeData.model,
+    );
     return NextResponse.json({
       success: true,
-      data: {
-        outputs,
-        logs: [`模型 ${nodeData.model || "qwen-plus"} 调用成功`],
-      },
+      data: { outputs, logs },
     });
-  } catch {
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "请求体无效或模型调用失败";
     return NextResponse.json(
-      { success: false, message: "请求体无效" },
+      { success: false, message },
       { status: 400 },
     );
   }
