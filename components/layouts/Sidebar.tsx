@@ -5,6 +5,7 @@ import { Layout, Menu } from "antd";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ApartmentOutlined,
+  AppstoreOutlined,
   BookOutlined,
   DashboardOutlined,
   RobotOutlined,
@@ -48,6 +49,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       key: "/knowledge/list",
       icon: <BookOutlined />,
       label: "知识库",
+    },
+    {
+      key: "/plugins/market",
+      icon: <AppstoreOutlined />,
+      label: "插件广场",
     },
   ];
 
